@@ -1,7 +1,7 @@
 import arcade
 import capnp
 
-from entities import AEntity
+from entities import AEntity, Player, Skeleton
 
 capnp.remove_import_hook()
 server_update_capnp = capnp.load(
@@ -10,11 +10,14 @@ client_update_capnp = capnp.load(
     "ColossalCyberAdventureMessages/src/colossalcyberadventuremessages/client_update.capnp")
 
 
-def create_entity_update(enemies):
+def create_entity_update(entities):
     update = server_update_capnp.ServerUpdate.new_message()
-    update.init("entitiesUpdate", len(enemies))
-    for i, enemy in enumerate(enemies):
-        update.entitiesUpdate[i] = create_entity(enemy.uid, "player", enemy.center_x, enemy.center_y)
+    update.init("entitiesUpdate", len(entities))
+    for i, entity in enumerate(entities):
+        if isinstance(entity, Player):
+            update.entitiesUpdate[i] = create_entity(entity.uid, "player", entity.center_x, entity.center_y)
+        if isinstance(entity, Skeleton):
+            update.entitiesUpdate[i] = create_entity(entity.uid, "skeleton", entity.center_x, entity.center_y)
     return update
 
 

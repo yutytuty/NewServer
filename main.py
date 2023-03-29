@@ -43,6 +43,9 @@ class World(arcade.Window):
             self.players.append(player)
         self.players_to_add.clear()
 
+        self.players.on_update(delta_time)
+        self.enemies.on_update(delta_time)
+
     def get_visible_entities_for_player(self, player: Player):
         entities_in_rect = []
         rect = [player.center_x - constants.SCREEN_WIDTH / 2,

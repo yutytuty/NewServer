@@ -97,9 +97,7 @@ class AEnemy(AEntity):
             target_y = self.player_target.center_y
             origin_x, origin_y = self.center_x, self.center_y
 
-            self.center_x = origin_x
-            self.center_y = origin_y
-            direction = Vec2(target_x - origin_x, target_y - origin_y).normalize() * self.speed * delta_time
+            direction = Vec2(target_x - origin_x, target_y - origin_y).normalize() * self.speed  # * delta_time
             self.change_x = direction.x
             self.change_y = direction.y
 
@@ -117,7 +115,7 @@ class AEnemy(AEntity):
 
 
 class Skeleton(AEnemy):
-    SPEED = 3
+    SPEED = 2
 
     def __init__(self, uid, players: arcade.SpriteList, enemy_array: arcade.SpriteList):
         super().__init__(uid, Skeleton.SPEED, enemy_array, SkeletonAnimationState, players,
@@ -130,6 +128,7 @@ class Skeleton(AEnemy):
 
         self.center_x += self.change_x
         self.center_y += self.change_y
+        # print(self.center_x, self.center_y)
 
         self.check_collision()
 
@@ -137,12 +136,13 @@ class Skeleton(AEnemy):
         check_map_bounds(self)
 
     def update_enemy_speed(self, delta_time: float):
-        if len(self.players) > 0:
-            self.player_target = self.players[0]  # TODO make closest player
-            self.set_direction_to_player(delta_time)
-        else:
-            self.change_x = 0
-            self.change_y = 0
+        if not self.player_target:
+            if len(self.players) > 0:
+                self.player_target = self.players[0]  # TODO make closest player
+            else:
+                self.change_x = 0
+                self.change_y = 0
+        self.set_direction_to_player(delta_time)
 
 
 class Player(AEntity):

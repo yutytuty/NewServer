@@ -146,6 +146,8 @@ class Skeleton(AEnemy):
 
 
 class Player(AEntity):
+    SPEED = 5
+
     def __int__(self, uid, x, y):
         super().__init__(uid, x, y)
 

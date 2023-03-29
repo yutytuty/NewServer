@@ -3,6 +3,7 @@ import socket
 import threading
 
 import arcade
+from pyglet.math import Vec2
 
 import constants
 import messages
@@ -60,7 +61,6 @@ def handle_client(conn: socket.socket, addr):
     print("[*] Received connection from", addr)
 
     login_request = messages.read_identification_request(conn.recv(constants.BUFFER_SIZE))
-    print(login_request.register)
     if login_request.register:
         if register(login_request.username, login_request.password):
             resp = messages.create_identification_response_success()
@@ -90,8 +90,9 @@ def handle_client(conn: socket.socket, addr):
         data = messages.read_client_update(conn.recv(constants.BUFFER_SIZE))
         match data.which():
             case "move":
-                player.center_x = data.move.x
-                player.center_y = data.move.y
+                update_vec = Vec2(data.move.x, data.move.y).normalize() * player.SPEED
+                player.center_x += update_vec.x
+                player.center_y += update_vec.y
 
 
 def listen_for_connections():

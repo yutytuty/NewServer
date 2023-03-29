@@ -36,9 +36,8 @@ def read_identification_request(b: bytes):
 
 def create_identification_response_failure(reason: str):
     res = identification_capnp.IdentificationResponse.new_message()
-    res.failure.reason = "usernameTaken"
+    res.failure.reason = reason
     return res
-    # return identification_capnp.IdentificationResponse.new_message(failure=reason)
 
 
 def create_identification_response_success():

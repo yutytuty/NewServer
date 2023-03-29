@@ -6,7 +6,9 @@ import arcade
 
 import constants
 import messages
+import users
 from entities import Player, Skeleton
+from users import register, check_login
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(("localhost", constants.PORT))
@@ -56,12 +58,28 @@ class World(arcade.Window):
 
 def handle_client(conn: socket.socket, addr):
     print("[*] Received connection from", addr)
+
+    login_request = messages.read_identification_request(conn.recv(constants.BUFFER_SIZE))
+    if login_request.register:
+        if register(login_request.username, login_request.password):
+            resp = messages.create_identification_response_success()
+        else:
+            resp = messages.create_identification_response_failure("usernameTaken")
+    else:
+        if check_login(login_request.username, login_request.password):
+            resp = messages.create_identification_response_success()
+        else:
+            resp = messages.create_identification_response_failure("invalidCredentials")
+    print("Sending", resp)
+    conn.send(resp.to_bytes_packed())
+
     world.current_uid_lock.acquire()
     player = Player(world.current_uid, random.randint(100, 500), random.randint(100, 500))
     world.current_uid += 1
     world.current_uid_lock.release()
     world.players_to_add.append(player)
 
+    print("String server update loop")
     while True:
         entities_to_send = world.get_visible_entities_for_player(player)
         server_update = messages.create_entity_update(entities_to_send)
@@ -84,6 +102,7 @@ def listen_for_connections():
 
 
 world = World()
+users.init()
 connection_listener = threading.Thread(target=listen_for_connections)
 connection_listener.start()
 world.run()

@@ -1,13 +1,14 @@
-import arcade
 import capnp
 
-from entities import AEntity, Player, Skeleton
+from entities import Player, Skeleton
 
 capnp.remove_import_hook()
 server_update_capnp = capnp.load(
     "ColossalCyberAdventureMessages/src/colossalcyberadventuremessages/server_update.capnp")
 client_update_capnp = capnp.load(
     "ColossalCyberAdventureMessages/src/colossalcyberadventuremessages/client_update.capnp")
+identification_capnp = capnp.load(
+    "ColossalCyberAdventureMessages/src/colossalcyberadventuremessages/identification.capnp")
 
 
 def create_entity_update(entities):
@@ -27,3 +28,18 @@ def create_entity(entity_id: int, entity_type: str, x: float, y: float):
 
 def read_client_update(b: bytes):
     return client_update_capnp.ClientUpdate.from_bytes_packed(b)
+
+
+def read_identification_request(b: bytes):
+    return identification_capnp.IdentificationRequest.from_bytes_packed(b)
+
+
+def create_identification_response_failure(reason: str):
+    res = identification_capnp.IdentificationResponse.new_message()
+    res.failure.reason = "usernameTaken"
+    return res
+    # return identification_capnp.IdentificationResponse.new_message(failure=reason)
+
+
+def create_identification_response_success():
+    return identification_capnp.IdentificationResponse.new_message(success=None)

@@ -8,3 +8,4 @@ pyglet==2.0.5
 pymunk==6.4.0
 pytiled-parser==2.2.0
 typing_extensions==4.5.0
+mysql-connector-python~=8.0.32

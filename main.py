@@ -89,13 +89,19 @@ def handle_client(conn: socket.socket, addr):
     while True:
         entities_to_send = world.get_visible_entities_for_player(player)
         server_update = messages.create_entity_update(entities_to_send)
+        # print(server_update)
+        # print(player.center_x, player.center_y)
+        # for i in range(len(entities_to_send)):
+        #     print(entities_to_send[i].get_position())
         conn.send(server_update.to_bytes_packed())
         data = messages.read_client_update(conn.recv(constants.BUFFER_SIZE))
         match data.which():
             case "move":
                 update_vec = Vec2(data.move.x, data.move.y).normalize() * player.SPEED
-                player.center_x += update_vec.x
-                player.center_y += update_vec.y
+                # player.center_x += update_vec.x
+                # player.center_y += update_vec.y
+                player.change_x = update_vec.x
+                player.change_y = update_vec.y
 
 
 def listen_for_connections():

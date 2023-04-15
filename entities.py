@@ -12,6 +12,12 @@ hitboxes_json = json.load(fp)
 fp.close()
 
 
+class PlayerAnimationState(Enum):
+    """Holds the path inside the resources folder and the amount of frames in the animation"""
+    IDLE = ("idle", 8)
+    WALK = ("walk", 8)
+
+
 class SkeletonAnimationState(Enum):
     """Holds the path inside the resources folder and the amount of frames in the animation"""
     IDLE = ("idle", 4)
@@ -45,6 +51,13 @@ class AEntity(arcade.Sprite):
     def __init__(self, uid, x, y):
         super().__init__(center_x=x, center_y=y)
         self.uid = uid
+        self.direction = Direction.RIGHT
+        self.state = None
+        self.change_x = 0
+        self.change_y = 0
+
+    def get_position(self):
+        return self.center_x, self.center_y
 
 
 class AEnemy(AEntity):
@@ -121,7 +134,15 @@ class Skeleton(AEnemy):
         super().__init__(uid, Skeleton.SPEED, enemy_array, SkeletonAnimationState, players,
                          SkeletonAnimationState.IDLE, Direction.RIGHT)
 
+        self.state = SkeletonAnimationState.IDLE
         self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"])
+
+
+    def update_state(self):
+        if self.change_x == 0 and self.change_y == 0:
+            self.state = SkeletonAnimationState.IDLE
+        else:
+            self.state = SkeletonAnimationState.WALK
 
     def on_update(self, delta_time: float = 1 / 60) -> None:
         self.update_enemy_speed(delta_time)
@@ -129,6 +150,9 @@ class Skeleton(AEnemy):
         self.center_x += self.change_x
         self.center_y += self.change_y
         # print(self.center_x, self.center_y)
+
+        self.update_direction()
+        self.update_state()
 
         self.check_collision()
 
@@ -139,10 +163,18 @@ class Skeleton(AEnemy):
         if not self.player_target:
             if len(self.players) > 0:
                 self.player_target = self.players[0]  # TODO make closest player
+                self.set_direction_to_player(delta_time)
             else:
                 self.change_x = 0
                 self.change_y = 0
-        self.set_direction_to_player(delta_time)
+
+    def update_direction(self):
+        if self.change_x < 0:
+            self.direction = Direction.LEFT
+            self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["left"])
+        elif self.change_x > 0:
+            self.direction = Direction.RIGHT
+            self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"])
 
 
 class Player(AEntity):
@@ -150,5 +182,34 @@ class Player(AEntity):
 
     def __int__(self, uid, x, y):
         super().__init__(uid, x, y)
-
         self.hit_box = arcade.hitbox.HitBox(hitboxes_json["player"]["right"])
+        self.direction = Direction.RIGHT
+        self.state = PlayerAnimationState.IDLE
+
+    def update_state(self):
+        if self.change_x == 0 and self.change_y == 0:
+            self.state = PlayerAnimationState.IDLE
+        else:
+            self.state = PlayerAnimationState.WALK
+
+    def update_direction(self):
+        if self.change_x < 0:
+            self.direction = Direction.LEFT
+            self.hit_box = arcade.hitbox.HitBox(hitboxes_json["player"]["left"])
+        elif self.change_x > 0:
+            self.direction = Direction.RIGHT
+            self.hit_box = arcade.hitbox.HitBox(hitboxes_json["player"]["right"])
+
+    def on_update(self, delta_time: float = 1 / 60) -> None:
+        self.update_player_speed(delta_time)
+        # ToDo dont let the player walk wherever they want (check distance he moved and check he is not colliding
+
+        self.update_direction()
+        self.update_state()
+        check_map_bounds(self)
+
+    def update_player_speed(self, delta_time: float):
+        self.center_x += self.change_x
+        self.center_y += self.change_y
+
+        # ToDo chenk collision and stuuf

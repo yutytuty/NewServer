@@ -137,7 +137,6 @@ class Skeleton(AEnemy):
         self.state = SkeletonAnimationState.IDLE
         self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"])
 
-
     def update_state(self):
         if self.change_x == 0 and self.change_y == 0:
             self.state = SkeletonAnimationState.IDLE
@@ -149,7 +148,6 @@ class Skeleton(AEnemy):
 
         self.center_x += self.change_x
         self.center_y += self.change_y
-        # print(self.center_x, self.center_y)
 
         self.update_direction()
         self.update_state()
@@ -202,8 +200,8 @@ class Player(AEntity):
 
     def on_update(self, delta_time: float = 1 / 60) -> None:
         self.update_player_speed(delta_time)
-        # ToDo dont let the player walk wherever they want (check distance he moved and check he is not colliding
-
+        # # ToDo dont let the player walk wherever they want (check distance he moved and check he is not colliding
+        #
         self.update_direction()
         self.update_state()
         check_map_bounds(self)

@@ -67,21 +67,23 @@ def handle_client(conn: socket.socket, addr):
         login_request = messages.read_identification_request(conn.recv(constants.BUFFER_SIZE))
         if login_request.register:
             if register(login_request.username, login_request.password):
-                resp = messages.create_identification_response_success()
+                resp = messages.create_empty_identification_response_success()
             else:
                 resp = messages.create_identification_response_failure("usernameTaken")
         else:
             if check_login(login_request.username, login_request.password):
-                resp = messages.create_identification_response_success()
+                resp = messages.create_empty_identification_response_success()
             else:
                 resp = messages.create_identification_response_failure("invalidCredentials")
-        print("Sending", resp)
-        conn.send(resp.to_bytes_packed())
         if resp.which() == "failure":
+            print("Sending", resp)
+            conn.send(resp.to_bytes_packed())
             quit()
 
         world.current_uid_lock.acquire()
         player = Player(world.current_uid, random.randint(100, 500), random.randint(100, 500))
+        resp.success.playerid = player.uid
+        conn.send(resp.to_bytes_packed())
         world.current_uid += 1
         world.current_uid_lock.release()
         world.players_to_add.append(player)

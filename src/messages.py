@@ -47,5 +47,11 @@ def create_identification_response_failure(reason: str):
     return res
 
 
-def create_identification_response_success():
-    return identification_capnp.IdentificationResponse.new_message(success=None)
+def create_identification_response_success(player_id: int):
+    return identification_capnp.IdentificationResponse.new_message(
+        success=identification_capnp.SuccessInformation.new_message(playerid=player_id))
+
+
+def create_empty_identification_response_success():
+    return identification_capnp.IdentificationResponse.new_message(
+        success=identification_capnp.SuccessInformation.new_message())

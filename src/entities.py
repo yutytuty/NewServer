@@ -158,13 +158,20 @@ class Skeleton(AEnemy):
         check_map_bounds(self)
 
     def update_enemy_speed(self, delta_time: float):
-        if not self.player_target:
-            if len(self.players) > 0:
-                self.player_target = self.players[0]  # TODO make closest player
-                self.set_direction_to_player(delta_time)
-            else:
-                self.change_x = 0
-                self.change_y = 0
+        if len(self.players) > 0:
+            closest_player: None | Player = None
+            for player in self.players:
+                closest_distance = arcade.get_distance_between_sprites(self, player)
+                closest_player = player
+                distance_to_player = arcade.get_distance_between_sprites(self, player)
+                if distance_to_player < closest_distance:
+                    distance_to_player = closest_distance
+                    closest_player = player
+            self.player_target = closest_player
+            self.set_direction_to_player(delta_time)
+        else:
+            self.change_x = 0
+            self.change_y = 0
 
     def update_direction(self):
         if self.change_x < 0:

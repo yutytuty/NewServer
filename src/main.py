@@ -62,9 +62,12 @@ class World(arcade.Window):
 
 
 def handle_client(conn: socket.socket, addr):
-    print("[*] Received connection from", addr)
+    print(f"[{addr}] Received connection")
     player: Player | None = None
     uuid: UUID | None = None
+
+    start_x, start_y, resp = -1, -1, None  # just to make PyCharm not mad at me. Does not actually do anything.
+    # noinspection PyBroadException
     try:
         login_request = messages.read_identification_request(conn.recv(constants.BUFFER_SIZE))
         if login_request.register:
@@ -76,14 +79,19 @@ def handle_client(conn: socket.socket, addr):
             else:
                 resp = messages.create_identification_response_failure("usernameTaken")
         else:
-            uuid, start_x, start_y = check_login(login_request.username, login_request.password)
-            if uuid:
-                resp = messages.create_empty_identification_response_success()
-            else:
-                resp = messages.create_identification_response_failure("invalidCredentials")
+            try:
+                result = check_login(login_request.username, login_request.password)
+                if result:
+                    uuid, start_x, start_y = result
+                    resp = messages.create_empty_identification_response_success()
+                else:
+                    resp = messages.create_identification_response_failure("invalidCredentials")
+            except users.UserAlreadyLoggedInError:
+                resp = messages.create_identification_response_failure("userAlreadyLoggedIn")
         if resp.which() == "failure":
-            print("Sending", resp)
+            print(f"[{addr}] Sending {resp}")
             conn.send(resp.to_bytes_packed())
+            print(f"[{addr}] Closing connection")
             quit()
 
         world.current_uid_lock.acquire()
@@ -94,7 +102,9 @@ def handle_client(conn: socket.socket, addr):
         world.current_uid_lock.release()
         world.players_to_add.append(player)
 
-        print("String server update loop")
+        users.set_lock_for_user(uuid, True)
+        print(f"[{addr}] locked user with uuid", str(uuid))
+        print(f"[{addr}] String server update loop")
         while True:
             entities_to_send = world.get_visible_entities_for_player(player)
             server_update = messages.create_entity_update(entities_to_send)
@@ -105,10 +115,12 @@ def handle_client(conn: socket.socket, addr):
                     update_vec = Vec2(data.move.x, data.move.y).normalize() * player.SPEED
                     player.change_x = update_vec.x
                     player.change_y = update_vec.y
-    except ConnectionResetError:
+    except Exception:
         if player:
             if uuid:
                 users.set_last_logoff_location(uuid, player.center_x, player.center_y)
+                print(f"[{addr}] Released lock for user with uuid", uuid)
+                users.set_lock_for_user(uuid, False)
             world.players.remove(player)
         conn.close()
         quit()

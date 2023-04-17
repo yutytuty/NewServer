@@ -7,7 +7,7 @@ from pyglet.math import Vec2
 
 from common import check_map_bounds
 
-fp = open("./hitboxes.json", "r")
+fp = open("hitboxes.json", "r")
 hitboxes_json = json.load(fp)
 fp.close()
 
@@ -135,7 +135,7 @@ class Skeleton(AEnemy):
                          SkeletonAnimationState.IDLE, Direction.RIGHT)
 
         self.state = SkeletonAnimationState.IDLE
-        self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"])
+        self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"], self.position)
 
     def update_state(self):
         if self.change_x == 0 and self.change_y == 0:
@@ -169,10 +169,10 @@ class Skeleton(AEnemy):
     def update_direction(self):
         if self.change_x < 0:
             self.direction = Direction.LEFT
-            self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["left"])
+            self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["left"], self.position)
         elif self.change_x > 0:
             self.direction = Direction.RIGHT
-            self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"])
+            self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"], self.position)
 
 
 class Player(AEntity):
@@ -180,7 +180,7 @@ class Player(AEntity):
 
     def __int__(self, uid, x, y):
         super().__init__(uid, x, y)
-        self.hit_box = arcade.hitbox.HitBox(hitboxes_json["player"]["right"])
+        self._hit_box = arcade.hitbox.HitBox(hitboxes_json["player"]["right"], (self.center_x, self.center_y), (2, 2))
         self.direction = Direction.RIGHT
         self.state = PlayerAnimationState.IDLE
 
@@ -193,10 +193,11 @@ class Player(AEntity):
     def update_direction(self):
         if self.change_x < 0:
             self.direction = Direction.LEFT
-            self.hit_box = arcade.hitbox.HitBox(hitboxes_json["player"]["left"])
+            self.hit_box = arcade.hitbox.HitBox(hitboxes_json["player"]["left"], (self.center_x, self.center_y), (2, 2))
         elif self.change_x > 0:
             self.direction = Direction.RIGHT
-            self.hit_box = arcade.hitbox.HitBox(hitboxes_json["player"]["right"])
+            self.hit_box = arcade.hitbox.HitBox(hitboxes_json["player"]["right"], (self.center_x, self.center_y),
+                                                (2, 2))
 
     def on_update(self, delta_time: float = 1 / 60) -> None:
         self.update_player_speed(delta_time)

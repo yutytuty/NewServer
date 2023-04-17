@@ -3,7 +3,6 @@ import hashlib
 import mysql.connector
 from mysql.connector import MySQLConnection
 from mysql.connector.cursor import MySQLCursor
-from mysql.connector.cursor_cext import CMySQLCursor
 
 import constants
 
@@ -46,7 +45,6 @@ def check_login(username: str, password: str) -> bool:
     val = (username, password_hash)
 
     cursor.execute(sql, val)
-
     if cursor.fetchone():
         return True
     return False

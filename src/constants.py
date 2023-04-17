@@ -11,4 +11,4 @@ SCREEN_HEIGHT = 1080
 
 DB_HOST = "localhost"
 DB_USER = "gameserver"
-DB_PASSWORD_FILE_PATH = "./db_passwd.txt"
+DB_PASSWORD_FILE_PATH = "db_passwd.txt"

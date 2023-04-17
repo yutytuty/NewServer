@@ -6,6 +6,7 @@ import arcade
 from pyglet.math import Vec2
 
 from common import check_map_bounds
+from src import constants
 
 fp = open("hitboxes.json", "r")
 hitboxes_json = json.load(fp)
@@ -62,7 +63,9 @@ class AEntity(arcade.Sprite):
 
 class AEnemy(AEntity):
     def __init__(self, uid, speed, enemy_array, animation_state, players: arcade.SpriteList, initial_state,
-                 initial_direction, x=random.randint(0, 400), y=random.randint(0, 400)):
+                 initial_direction,
+                 x=random.randint(constants.ENEMY_SPAWN_LOCATION_RANGE_MIN, constants.ENEMY_SPAWN_LOCATION_RANGE_MAX),
+                 y=random.randint(constants.ENEMY_SPAWN_LOCATION_RANGE_MIN, constants.ENEMY_SPAWN_LOCATION_RANGE_MAX)):
         super().__init__(uid, x, y)
 
         self.speed = speed
@@ -78,8 +81,10 @@ class AEnemy(AEntity):
 
         while len(arcade.check_for_collision_with_list(self, self.enemy_array)) > 1 or \
                 len(arcade.check_for_collision_with_list(self, self.players)) > 0:
-            self.center_x = random.randint(0, 400)
-            self.center_y = random.randint(0, 400)
+            self.center_x = random.randint(constants.ENEMY_SPAWN_LOCATION_RANGE_MIN,
+                                           constants.ENEMY_SPAWN_LOCATION_RANGE_MAX)
+            self.center_y = random.randint(constants.ENEMY_SPAWN_LOCATION_RANGE_MIN,
+                                           constants.ENEMY_SPAWN_LOCATION_RANGE_MAX)
 
     def check_collision(self):
         enemy_collisions = arcade.check_for_collision_with_list(self, self.enemy_array)

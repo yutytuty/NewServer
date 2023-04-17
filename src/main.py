@@ -18,7 +18,7 @@ s.listen(5)
 
 
 class World(arcade.Window):
-    SKELETON_AMOUNT = 1
+    SKELETON_AMOUNT = 100
     SLIME_AMOUNT = 0
     ARCHER_AMOUNT = 0
 
@@ -72,8 +72,8 @@ def handle_client(conn: socket.socket, addr):
         login_request = messages.read_identification_request(conn.recv(constants.BUFFER_SIZE))
         if login_request.register:
             uuid = register(login_request.username, login_request.password)
-            start_x = random.randint(constants.SPAWN_LOCATION_RANGE_MIN, constants.SPAWN_LOCATION_RANGE_MAX)
-            start_y = random.randint(constants.SPAWN_LOCATION_RANGE_MIN, constants.SPAWN_LOCATION_RANGE_MAX)
+            start_x = random.randint(constants.PLAYER_SPAWN_LOCATION_RANGE_MIN, constants.PLAYER_SPAWN_LOCATION_RANGE_MAX)
+            start_y = random.randint(constants.PLAYER_SPAWN_LOCATION_RANGE_MIN, constants.PLAYER_SPAWN_LOCATION_RANGE_MAX)
             if uuid:
                 resp = messages.create_empty_identification_response_success()
             else:

@@ -62,46 +62,52 @@ class World(arcade.Window):
 
 def handle_client(conn: socket.socket, addr):
     print("[*] Received connection from", addr)
+    player: Player | None = None
+    try:
+        login_request = messages.read_identification_request(conn.recv(constants.BUFFER_SIZE))
+        if login_request.register:
+            if register(login_request.username, login_request.password):
+                resp = messages.create_identification_response_success()
+            else:
+                resp = messages.create_identification_response_failure("usernameTaken")
+        else:
+            if check_login(login_request.username, login_request.password):
+                resp = messages.create_identification_response_success()
+            else:
+                resp = messages.create_identification_response_failure("invalidCredentials")
+        print("Sending", resp)
+        conn.send(resp.to_bytes_packed())
+        if resp.which() == "failure":
+            quit()
 
-    login_request = messages.read_identification_request(conn.recv(constants.BUFFER_SIZE))
-    if login_request.register:
-        if register(login_request.username, login_request.password):
-            resp = messages.create_identification_response_success()
-        else:
-            resp = messages.create_identification_response_failure("usernameTaken")
-    else:
-        if check_login(login_request.username, login_request.password):
-            resp = messages.create_identification_response_success()
-        else:
-            resp = messages.create_identification_response_failure("invalidCredentials")
-    print("Sending", resp)
-    conn.send(resp.to_bytes_packed())
-    if resp.which() == "failure":
+        world.current_uid_lock.acquire()
+        player = Player(world.current_uid, random.randint(100, 500), random.randint(100, 500))
+        world.current_uid += 1
+        world.current_uid_lock.release()
+        world.players_to_add.append(player)
+
+        print("String server update loop")
+        while True:
+            entities_to_send = world.get_visible_entities_for_player(player)
+            server_update = messages.create_entity_update(entities_to_send)
+            # print(server_update)
+            # print(player.center_x, player.center_y)
+            # for i in range(len(entities_to_send)):
+            #     print(entities_to_send[i].get_position())
+            conn.send(server_update.to_bytes_packed())
+            data = messages.read_client_update(conn.recv(constants.BUFFER_SIZE))
+            match data.which():
+                case "move":
+                    update_vec = Vec2(data.move.x, data.move.y).normalize() * player.SPEED
+                    # player.center_x += update_vec.x
+                    # player.center_y += update_vec.y
+                    player.change_x = update_vec.x
+                    player.change_y = update_vec.y
+    except ConnectionResetError:
+        if player:
+            world.players.remove(player)
+        conn.close()
         quit()
-
-    world.current_uid_lock.acquire()
-    player = Player(world.current_uid, random.randint(100, 500), random.randint(100, 500))
-    world.current_uid += 1
-    world.current_uid_lock.release()
-    world.players_to_add.append(player)
-
-    print("String server update loop")
-    while True:
-        entities_to_send = world.get_visible_entities_for_player(player)
-        server_update = messages.create_entity_update(entities_to_send)
-        # print(server_update)
-        # print(player.center_x, player.center_y)
-        # for i in range(len(entities_to_send)):
-        #     print(entities_to_send[i].get_position())
-        conn.send(server_update.to_bytes_packed())
-        data = messages.read_client_update(conn.recv(constants.BUFFER_SIZE))
-        match data.which():
-            case "move":
-                update_vec = Vec2(data.move.x, data.move.y).normalize() * player.SPEED
-                # player.center_x += update_vec.x
-                # player.center_y += update_vec.y
-                player.change_x = update_vec.x
-                player.change_y = update_vec.y
 
 
 def listen_for_connections():

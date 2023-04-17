@@ -1,6 +1,7 @@
 import random
 import socket
 import threading
+from uuid import UUID
 
 import arcade
 from pyglet.math import Vec2
@@ -26,7 +27,7 @@ class World(arcade.Window):
 
         self.players = arcade.SpriteList()
         self.enemies = arcade.SpriteList()
-        self.current_uid = 0
+        self.current_uid = 1
         self.current_uid_lock = threading.Lock()
 
         for i in range(World.SKELETON_AMOUNT):
@@ -63,15 +64,19 @@ class World(arcade.Window):
 def handle_client(conn: socket.socket, addr):
     print("[*] Received connection from", addr)
     player: Player | None = None
+    uuid: UUID | None = None
     try:
         login_request = messages.read_identification_request(conn.recv(constants.BUFFER_SIZE))
         if login_request.register:
-            if register(login_request.username, login_request.password):
+            uuid = register(login_request.username, login_request.password)
+            start_x, start_y = 100, 100  # TODO change to real location
+            if uuid:
                 resp = messages.create_empty_identification_response_success()
             else:
                 resp = messages.create_identification_response_failure("usernameTaken")
         else:
-            if check_login(login_request.username, login_request.password):
+            uuid, start_x, start_y = check_login(login_request.username, login_request.password)
+            if uuid:
                 resp = messages.create_empty_identification_response_success()
             else:
                 resp = messages.create_identification_response_failure("invalidCredentials")
@@ -81,7 +86,7 @@ def handle_client(conn: socket.socket, addr):
             quit()
 
         world.current_uid_lock.acquire()
-        player = Player(world.current_uid, random.randint(100, 500), random.randint(100, 500))
+        player = Player(world.current_uid, start_x, start_y)
         resp.success.playerid = player.uid
         conn.send(resp.to_bytes_packed())
         world.current_uid += 1
@@ -92,21 +97,17 @@ def handle_client(conn: socket.socket, addr):
         while True:
             entities_to_send = world.get_visible_entities_for_player(player)
             server_update = messages.create_entity_update(entities_to_send)
-            # print(server_update)
-            # print(player.center_x, player.center_y)
-            # for i in range(len(entities_to_send)):
-            #     print(entities_to_send[i].get_position())
             conn.send(server_update.to_bytes_packed())
             data = messages.read_client_update(conn.recv(constants.BUFFER_SIZE))
             match data.which():
                 case "move":
                     update_vec = Vec2(data.move.x, data.move.y).normalize() * player.SPEED
-                    # player.center_x += update_vec.x
-                    # player.center_y += update_vec.y
                     player.change_x = update_vec.x
                     player.change_y = update_vec.y
     except ConnectionResetError:
         if player:
+            if uuid:
+                users.set_last_logoff_location(uuid, player.center_x, player.center_y)
             world.players.remove(player)
         conn.close()
         quit()

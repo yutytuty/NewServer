@@ -42,7 +42,6 @@ def init():
 
 
 def check_login(username: str, password: str) -> tuple[UUID, float, float] | None:
-    # TODO protect from sql injection
     password_hash = hashlib.sha256(password.encode()).hexdigest()
     sql = "SELECT uuid," \
           "       last_logoff_location_x," \

@@ -69,7 +69,8 @@ def handle_client(conn: socket.socket, addr):
         login_request = messages.read_identification_request(conn.recv(constants.BUFFER_SIZE))
         if login_request.register:
             uuid = register(login_request.username, login_request.password)
-            start_x, start_y = 100, 100  # TODO change to real location
+            start_x = random.randint(constants.SPAWN_LOCATION_RANGE_MIN, constants.SPAWN_LOCATION_RANGE_MAX)
+            start_y = random.randint(constants.SPAWN_LOCATION_RANGE_MIN, constants.SPAWN_LOCATION_RANGE_MAX)
             if uuid:
                 resp = messages.create_empty_identification_response_success()
             else:

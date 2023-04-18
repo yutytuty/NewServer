@@ -1,6 +1,6 @@
 import capnp
 
-from entities import Player, Skeleton
+from entities import Player, Skeleton, Projectile
 
 capnp.remove_import_hook()
 server_update_capnp = capnp.load(
@@ -25,12 +25,18 @@ def create_entity_update(entities):
                 update.entitiesUpdate[i] = create_entity(entities[i].uid, "skeleton", entities[i].state.value[0],
                                                          entities[i].direction.value,
                                                          entities[i].center_x, entities[i].center_y)
+        if isinstance(entities[i], Projectile):
+            update.entitiesUpdate[i] = create_bullet_entity(entities[i].uid, "bullet", entities[i].center_x, entities[i].center_y)
     return update
 
 
 def create_entity(entity_id: int, entity_type: str, state, direction, x: float, y: float):
     return server_update_capnp.EntityUpdate.new_message(id=entity_id, type=entity_type, animationstate=state,
                                                         direction=direction, x=x, y=y)
+
+
+def create_bullet_entity(entity_id: int, entity_type: str, x: float, y: float):
+    return server_update_capnp.EntityUpdate.new_message(id=entity_id, type=entity_type, x=x, y=y)
 
 
 def read_client_update(b: bytes):

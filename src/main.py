@@ -9,7 +9,7 @@ from pyglet.math import Vec2
 import constants
 import messages
 import users
-from entities import Player, Skeleton
+from entities import Player, Skeleton, Projectile
 from users import register, check_login
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -26,6 +26,7 @@ class World(arcade.Window):
         super().__init__()
 
         self.players = arcade.SpriteList(use_spatial_hash=True)
+        self.projectiles = arcade.SpriteList(use_spatial_hash=True)
         self.enemies = arcade.SpriteList(use_spatial_hash=True)
         self.current_uid = 1
         self.current_uid_lock = threading.Lock()
@@ -46,6 +47,11 @@ class World(arcade.Window):
 
         self.players.on_update(delta_time)
         self.enemies.on_update(delta_time)
+        if len(self.players) > 0:
+            print(self.players[0].center_x, self.players[0].center_y)
+        if len(self.projectiles) > 0:
+            print(self.projectiles[0].center_x, self.projectiles[0].center_y)
+        self.projectiles.on_update(delta_time)
 
     def get_visible_entities_for_player(self, player: Player):
         entities_in_rect = []
@@ -55,6 +61,7 @@ class World(arcade.Window):
                 player.center_y + constants.SCREEN_HEIGHT / 2]
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.players))
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.enemies))
+        entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.projectiles))
         return entities_in_rect
 
     def check_movement(self, player: Player, new_x, new_y):
@@ -72,8 +79,10 @@ def handle_client(conn: socket.socket, addr):
         login_request = messages.read_identification_request(conn.recv(constants.BUFFER_SIZE))
         if login_request.register:
             uuid = register(login_request.username, login_request.password)
-            start_x = random.randint(constants.PLAYER_SPAWN_LOCATION_RANGE_MIN, constants.PLAYER_SPAWN_LOCATION_RANGE_MAX)
-            start_y = random.randint(constants.PLAYER_SPAWN_LOCATION_RANGE_MIN, constants.PLAYER_SPAWN_LOCATION_RANGE_MAX)
+            start_x = random.randint(constants.PLAYER_SPAWN_LOCATION_RANGE_MIN,
+                                     constants.PLAYER_SPAWN_LOCATION_RANGE_MAX)
+            start_y = random.randint(constants.PLAYER_SPAWN_LOCATION_RANGE_MIN,
+                                     constants.PLAYER_SPAWN_LOCATION_RANGE_MAX)
             if uuid:
                 resp = messages.create_empty_identification_response_success()
             else:
@@ -108,6 +117,7 @@ def handle_client(conn: socket.socket, addr):
         while True:
             entities_to_send = world.get_visible_entities_for_player(player)
             server_update = messages.create_entity_update(entities_to_send)
+            print(server_update)
             conn.send(server_update.to_bytes_packed())
             data = messages.read_client_update(conn.recv(constants.BUFFER_SIZE))
             match data.which():
@@ -115,6 +125,13 @@ def handle_client(conn: socket.socket, addr):
                     update_vec = Vec2(data.move.x, data.move.y).normalize() * player.SPEED
                     player.change_x = update_vec.x
                     player.change_y = update_vec.y
+                case "shot":
+                    projectile = Projectile(world.current_uid, player.center_x, player.center_y, data.shot.x,
+                                            data.shot.y, "player")
+                    world.current_uid += 1
+                    world.projectiles.append(projectile)
+
+
     except Exception:
         if player:
             if uuid:

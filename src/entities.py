@@ -1,6 +1,8 @@
 import json
 import random
 from enum import Enum
+from math import atan2, degrees
+from math import sqrt
 
 import arcade
 from pyglet.math import Vec2
@@ -233,3 +235,28 @@ class Player(AEntity):
         self.center_y += self.change_y
 
         # ToDo chenk collision and stuuf
+
+
+class Projectile(AEntity):
+    Sprite_Path = None
+    SPEED = 750
+
+    def __init__(self, uid, origin_x: float, origin_y: float, target_x: float, target_y: float, bullet_kind: str, distance=700):
+        super().__init__(uid, origin_x, origin_y)
+        self.distance = 0
+        self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"], self.position) # TODO placeholder - make sprite
+        self.max_distance = distance
+        self.origin_x = origin_x
+        self.origin_y = origin_y
+        direction = Vec2(target_x - origin_x, target_y - origin_y).normalize() * Projectile.SPEED
+        self.change_x = direction.x
+        self.change_y = direction.y
+        self.angle = degrees(atan2(direction.y, direction.x))
+
+    def on_update(self, delta_time: float = 1 / 60) -> None:
+        print("yay we did step 2")
+        self.distance = sqrt(abs(self.origin_x - self.center_x) ** 2 + abs(self.origin_y - self.center_y) ** 2)
+        self.center_x += self.change_x * delta_time
+        self.center_y += self.change_y * delta_time
+        if self.distance >= self.max_distance:
+            self.remove_from_sprite_lists()

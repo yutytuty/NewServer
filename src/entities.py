@@ -72,9 +72,6 @@ class AEnemy(AEntity):
         self.enemy_array = enemy_array
         self.animation_state = animation_state
         self.players = players
-        # distance_to_player = self.get
-        # for player in self.players:
-        #
         self.player_target: None | Player = None
         self.state = initial_state
         self.direction = initial_direction
@@ -90,12 +87,12 @@ class AEnemy(AEntity):
         enemy_collisions = arcade.check_for_collision_with_list(self, self.enemy_array)
         player_collisions = arcade.check_for_collision_with_list(self, self.players)
 
-        if len(enemy_collisions) > 1 or len(player_collisions) > 0:
+        if len(enemy_collisions) >= 1 or len(player_collisions) > 0:
             self.center_x -= self.change_x
             self.center_y -= self.change_y
             self.change_x = 0
             self.change_y = 0
-            self.state = self.animation_state.IDLE
+            self._state = self.animation_state.IDLE
 
     def set_animation_direction(self):
         if self.change_x < 0:
@@ -143,8 +140,20 @@ class Skeleton(AEnemy):
         self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"], self.position)
 
     def update_state(self):
+        distance_of_attack = 50
+        top_y_distance_of_attack = 15
+        bottom_y_distance_of_attack = -130
         if self.change_x == 0 and self.change_y == 0:
-            self.state = SkeletonAnimationState.IDLE
+            if self.player_target:
+                if (abs(self.player_target.center_x - self.left) <= distance_of_attack or
+                    abs(self.right - self.player_target.center_x) <= distance_of_attack) and \
+                        bottom_y_distance_of_attack <= self.center_y - \
+                        self.player_target.center_y <= top_y_distance_of_attack:
+                    self.state = self.animation_state.ATTACK
+                else:
+                    self.state = SkeletonAnimationState.IDLE
+            else:
+                self.state = SkeletonAnimationState.IDLE
         else:
             self.state = SkeletonAnimationState.WALK
 
@@ -154,10 +163,10 @@ class Skeleton(AEnemy):
         self.center_x += self.change_x
         self.center_y += self.change_y
 
-        self.update_direction()
-        self.update_state()
-
         self.check_collision()
+
+        self.update_state()
+        self.update_direction()
 
         self.set_animation_direction()
         check_map_bounds(self)

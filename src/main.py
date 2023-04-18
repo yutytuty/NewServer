@@ -25,8 +25,8 @@ class World(arcade.Window):
     def __init__(self):
         super().__init__()
 
-        self.players = arcade.SpriteList()
-        self.enemies = arcade.SpriteList()
+        self.players = arcade.SpriteList(use_spatial_hash=True)
+        self.enemies = arcade.SpriteList(use_spatial_hash=True)
         self.current_uid = 1
         self.current_uid_lock = threading.Lock()
 

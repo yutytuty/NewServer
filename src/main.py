@@ -30,12 +30,13 @@ class World(arcade.Window):
         self.players = arcade.SpriteList(use_spatial_hash=True)
         self.player_projectiles = arcade.SpriteList(use_spatial_hash=True)
         self.enemies = arcade.SpriteList(use_spatial_hash=True)
+        self.dead_enemies = arcade.SpriteList(use_spatial_hash=True)
         self.coins = arcade.SpriteList(use_spatial_hash=True)
         self.current_uid = 1
         self.current_uid_lock = threading.Lock()
 
         for i in range(World.SKELETON_AMOUNT):
-            skeleton = Skeleton(self.current_uid, self.players, self.enemies, self.player_projectiles)
+            skeleton = Skeleton(self.current_uid, self.players, self.enemies, self.player_projectiles, self.dead_enemies)
             self.current_uid_lock.acquire()
             self.current_uid += 1
             self.current_uid_lock.release()
@@ -59,6 +60,7 @@ class World(arcade.Window):
 
         self.players.on_update(delta_time)
         self.enemies.on_update(delta_time)
+        self.dead_enemies.on_update(delta_time)
         self.player_projectiles.on_update(delta_time)
 
     def get_visible_entities_for_player(self, player: Player):
@@ -70,6 +72,7 @@ class World(arcade.Window):
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.players))
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.enemies))
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.player_projectiles))
+        entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.dead_enemies))
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.coins))
         return entities_in_rect
 

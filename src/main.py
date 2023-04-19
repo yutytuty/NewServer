@@ -9,7 +9,7 @@ from pyglet.math import Vec2
 import constants
 import messages
 import users
-from entities import Player, Skeleton, Projectile, Coin
+from entities import Coin
 from entities import Player, Skeleton, Projectile, Archer
 from users import register, check_login
 
@@ -58,7 +58,7 @@ class World(arcade.Window):
             self.current_uid += 1
             x = random.randint(constants.ITEM_SPAWN_LOCATION_RANGE_MIN, constants.ITEM_SPAWN_LOCATION_RANGE_MAX)
             y = random.randint(constants.ITEM_SPAWN_LOCATION_RANGE_MIN, constants.ITEM_SPAWN_LOCATION_RANGE_MAX)
-            coin = Coin(self.current_uid, x, y)
+            coin = Coin(self.current_uid, self.current_uid, x, y)
             self.current_uid_lock.release()
             self.coins.append(coin)
 

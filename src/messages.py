@@ -1,6 +1,6 @@
 import capnp
 
-from entities import Player, Skeleton, Projectile, Archer
+from entities import Archer
 from entities import Player, Skeleton, Projectile, Coin
 
 capnp.remove_import_hook()

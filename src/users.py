@@ -36,12 +36,13 @@ def init():
 
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS users ("
-        "   uuid CHAR(36) PRIMARY KEY,"
-        "   username VARCHAR(255),"
-        "   password_hash VARCHAR(255),"
-        "   last_logoff_location_x FLOAT DEFAULT -1,"
-        "   last_logoff_location_y FLOAT DEFAULT -1,"
-        "   is_locked BOOLEAN DEFAULT 0"
+        "    uuid CHAR(36) PRIMARY KEY,"
+        "    username VARCHAR(255),"
+        "    password_hash VARCHAR(255),"
+        "    last_logoff_location_x FLOAT DEFAULT -1,"
+        "    last_logoff_location_y FLOAT DEFAULT -1,"
+        "    coin_amount INT DEFAULT 0,"
+        "    is_locked BOOLEAN DEFAULT 0"
         ")"
     )
 
@@ -96,6 +97,16 @@ def set_last_logoff_location(uuid: UUID, x: float, y: float):
     cursor_lock.acquire(blocking=True)
     sql = "UPDATE users SET last_logoff_location_x = %s, last_logoff_location_y = %s WHERE uuid = %s"
     val = (x, y, str(uuid))
+    cursor.execute(sql, val)
+    db.commit()
+    cursor_lock.release()
+
+
+def set_coin_amount(uuid: UUID, amount: int):
+    global cursor_lock
+    cursor_lock.acquire(blocking=True)
+    sql = "UPDATE users SET coin_amount = %s WHERE uuid = %s"
+    val = (amount, str(uuid))
     cursor.execute(sql, val)
     db.commit()
     cursor_lock.release()

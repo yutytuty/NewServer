@@ -246,8 +246,6 @@ class Projectile(AEntity):
         self.distance = 0
         self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"], self.position) # TODO placeholder - make sprite
         self.max_distance = distance
-        print("origin", origin_x, origin_y)
-        print("target", target_x, target_y)
         self.origin_x = origin_x
         self.origin_y = origin_y
 

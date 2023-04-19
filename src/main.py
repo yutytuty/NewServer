@@ -116,7 +116,7 @@ def handle_client(conn: socket.socket, addr):
             quit()
 
         world.current_uid_lock.acquire()
-        player = Player(world.current_uid, start_x, start_y, world.coins)
+        player = Player(world.current_uid, start_x, start_y, world.coins, users.get_coin_amount(uuid))
         resp.success.playerid = player.uid
         print(f"[{addr}] Sending {resp}")
         conn.send(resp.to_bytes_packed())

@@ -223,13 +223,13 @@ class Skeleton(AEnemy):
 class Player(AEntity):
     SPEED = 5
 
-    def __init__(self, uid, x, y, coin_list: arcade.SpriteList):
+    def __init__(self, uid, x, y, coin_list: arcade.SpriteList, coin_amount: int):
         super().__init__(uid, x, y)
         self.coin_list = coin_list
         self._hit_box = arcade.hitbox.HitBox(hitboxes_json["player"]["right"], (self.center_x, self.center_y), (2, 2))
         self.direction = Direction.RIGHT
         self.state = PlayerAnimationState.IDLE
-        self.coin_amount = 0
+        self.coin_amount = coin_amount
 
     def update_state(self):
         if self.change_x == 0 and self.change_y == 0:

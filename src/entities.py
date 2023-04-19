@@ -65,7 +65,7 @@ class AEntity(arcade.Sprite):
 
 class AEnemy(AEntity):
     def __init__(self, uid, speed, enemy_array, animation_state, players: arcade.SpriteList, initial_state,
-                 initial_direction,
+                 initial_direction, player_projectile_list: arcade.SpriteList,
                  x=random.randint(constants.ENEMY_SPAWN_LOCATION_RANGE_MIN, constants.ENEMY_SPAWN_LOCATION_RANGE_MAX),
                  y=random.randint(constants.ENEMY_SPAWN_LOCATION_RANGE_MIN, constants.ENEMY_SPAWN_LOCATION_RANGE_MAX)):
         super().__init__(uid, x, y)
@@ -73,10 +73,12 @@ class AEnemy(AEntity):
         self.speed = speed
         self.enemy_array = enemy_array
         self.animation_state = animation_state
+        self._state = self.animation_state.IDLE
         self.players = players
         self.player_target: None | Player = None
         self.state = initial_state
         self.direction = initial_direction
+        self.player_projectile_list = player_projectile_list
 
         while len(arcade.check_for_collision_with_list(self, self.enemy_array)) > 1 or \
                 len(arcade.check_for_collision_with_list(self, self.players)) > 0:
@@ -88,6 +90,11 @@ class AEnemy(AEntity):
     def check_collision(self):
         enemy_collisions = arcade.check_for_collision_with_list(self, self.enemy_array)
         player_collisions = arcade.check_for_collision_with_list(self, self.players)
+        player_projectile_collisions = arcade.check_for_collision_with_list(self, self.player_projectile_list)
+
+        if len(player_projectile_collisions) > 0:
+            self.player_projectile_list[0].kill()
+            self.kill()
 
         if len(enemy_collisions) >= 1 or len(player_collisions) > 0:
             self.center_x -= self.change_x
@@ -134,9 +141,10 @@ class AEnemy(AEntity):
 class Skeleton(AEnemy):
     SPEED = 2
 
-    def __init__(self, uid, players: arcade.SpriteList, enemy_array: arcade.SpriteList):
+    def __init__(self, uid, players: arcade.SpriteList, enemy_array: arcade.SpriteList,
+                 player_projectile_list: arcade.SpriteList):
         super().__init__(uid, Skeleton.SPEED, enemy_array, SkeletonAnimationState, players,
-                         SkeletonAnimationState.IDLE, Direction.RIGHT)
+                         SkeletonAnimationState.IDLE, Direction.RIGHT, player_projectile_list)
 
         self.state = SkeletonAnimationState.IDLE
         self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"], self.position)
@@ -241,10 +249,12 @@ class Projectile(AEntity):
     Sprite_Path = None
     SPEED = 750
 
-    def __init__(self, uid, origin_x: float, origin_y: float, target_x: float, target_y: float, bullet_kind: str, distance=700):
+    def __init__(self, uid, origin_x: float, origin_y: float, target_x: float, target_y: float, bullet_kind: str,
+                 distance=700):
         super().__init__(uid, origin_x, origin_y)
         self.distance = 0
-        self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"], self.position) # TODO placeholder - make sprite
+        self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"],
+                                            self.position)  # TODO placeholder - make sprite
         self.max_distance = distance
         self.origin_x = origin_x
         self.origin_y = origin_y

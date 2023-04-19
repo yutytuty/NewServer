@@ -223,13 +223,15 @@ class Skeleton(AEnemy):
 class Player(AEntity):
     SPEED = 5
 
-    def __init__(self, uid, x, y, coin_list: arcade.SpriteList):
+    def __init__(self, uid, x, y, coin_list: arcade.SpriteList, shroom_list: arcade.SpriteList):
         super().__init__(uid, x, y)
         self.coin_list = coin_list
+        self.shroom_list = shroom_list
         self._hit_box = arcade.hitbox.HitBox(hitboxes_json["player"]["right"], (self.center_x, self.center_y), (2, 2))
         self.direction = Direction.RIGHT
         self.state = PlayerAnimationState.IDLE
         self.coin_amount = 0
+        self.shroom_amount =0
 
     def update_state(self):
         if self.change_x == 0 and self.change_y == 0:
@@ -259,6 +261,12 @@ class Player(AEntity):
             for coin in coin_collision_list:
                 self.coin_amount += 1
                 coin.kill()
+
+        shroom_collision_list = arcade.check_for_collision_with_list(self, self.shroom_list)
+        if len(shroom_collision_list_collision_list) > 0:
+            for shroom in shroom_collision_list:
+                self.shroom_amount += 1
+                shroom.kill()
 
     def update_player_speed(self, delta_time: float):
         self.center_x += self.change_x
@@ -297,3 +305,7 @@ class Projectile(AEntity):
 class Coin(AEntity):
     def __init__(self, uid, x, y):
         super().__init__(uid, x, y)
+
+class HealthShroom(AEntity):
+    def __innit__(self,uid, x,y):
+        super().__init__(self,x,y)

@@ -9,7 +9,7 @@ from pyglet.math import Vec2
 import constants
 import messages
 import users
-from entities import Player, Skeleton, Projectile, Coin
+from entities import Player, Skeleton, Projectile, Coin, HealthShroom
 from users import register, check_login
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -21,7 +21,7 @@ class World(arcade.Window):
     SKELETON_AMOUNT = 100
     SLIME_AMOUNT = 0
     ARCHER_AMOUNT = 0
-
+    HEALTH_SHROOM_AMOUNT = 10
     COIN_AMOUNT = 100
 
     def __init__(self):
@@ -32,6 +32,7 @@ class World(arcade.Window):
         self.enemies = arcade.SpriteList(use_spatial_hash=True)
         self.dead_enemies = arcade.SpriteList(use_spatial_hash=True)
         self.coins = arcade.SpriteList(use_spatial_hash=True)
+        self.shrooms = arcade.SpriteList(use_spatial_hash=True)
         self.current_uid = 1
         self.current_uid_lock = threading.Lock()
 
@@ -50,6 +51,16 @@ class World(arcade.Window):
             coin = Coin(self.current_uid, x, y)
             self.current_uid_lock.release()
             self.coins.append(coin)
+
+        for i in range(World.HEALTH_SHROOM_AMOUNT):
+            self.current_uid_lock.acquire()
+            self.current_uid += 1
+            x = random.randint(constants.ITEM_SPAWN_LOCATION_RANGE_MIN, constants.ITEM_SPAWN_LOCATION_RANGE_MAX)
+            y = random.randint(constants.ITEM_SPAWN_LOCATION_RANGE_MIN, constants.ITEM_SPAWN_LOCATION_RANGE_MAX)
+            shroom = HealthShroom(self.current_uid, x, y)
+            self.current_uid_lock.release()
+            self.shrooms.append(shroom)
+
 
         self.players_to_add = []
 
@@ -74,6 +85,7 @@ class World(arcade.Window):
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.player_projectiles))
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.dead_enemies))
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.coins))
+        entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.shrooms))
         return entities_in_rect
 
     def check_movement(self, player: Player, new_x, new_y):
@@ -117,6 +129,7 @@ def handle_client(conn: socket.socket, addr):
 
         world.current_uid_lock.acquire()
         player = Player(world.current_uid, start_x, start_y, world.coins)
+        player = Player(world.current_uid, start_x, start_y, world.shrooms)
         resp.success.playerid = player.uid
         print(f"[{addr}] Sending {resp}")
         conn.send(resp.to_bytes_packed())
@@ -150,6 +163,7 @@ def handle_client(conn: socket.socket, addr):
             if uuid:
                 users.set_last_logoff_location(uuid, player.center_x, player.center_y)
                 users.set_coin_amount(uuid, player.coin_amount)
+                users.set_shroom_amount(uuid, player.shroom_amount)
                 print(f"[{addr}] Released lock for user with uuid", uuid)
                 users.set_lock_for_user(uuid, False)
             world.players.remove(player)

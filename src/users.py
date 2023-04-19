@@ -102,6 +102,17 @@ def set_last_logoff_location(uuid: UUID, x: float, y: float):
     cursor_lock.release()
 
 
+def get_coin_amount(uuid: UUID) -> int:
+    global cursor_lock
+    cursor_lock.acquire(blocking=True)
+    sql = "SELECT coin_amount FROM users WHERE uuid = %s"
+    val = (str(uuid),)
+    cursor.execute(sql, val)
+    amount = cursor.fetchone()[0]
+    cursor_lock.release()
+    return amount
+
+
 def set_coin_amount(uuid: UUID, amount: int):
     global cursor_lock
     cursor_lock.acquire(blocking=True)

@@ -65,7 +65,7 @@ class AEntity(arcade.Sprite):
 
 class AEnemy(AEntity):
     def __init__(self, uid, speed, enemy_array, animation_state, players: arcade.SpriteList, initial_state,
-                 initial_direction, player_projectile_list: arcade.SpriteList,
+                 initial_direction, player_projectile_list: arcade.SpriteList, dead_enemies: arcade.SpriteList,
                  x=random.randint(constants.ENEMY_SPAWN_LOCATION_RANGE_MIN, constants.ENEMY_SPAWN_LOCATION_RANGE_MAX),
                  y=random.randint(constants.ENEMY_SPAWN_LOCATION_RANGE_MIN, constants.ENEMY_SPAWN_LOCATION_RANGE_MAX)):
         super().__init__(uid, x, y)
@@ -73,6 +73,7 @@ class AEnemy(AEntity):
         self.speed = speed
         self.enemy_array = enemy_array
         self.animation_state = animation_state
+        self.dead_enemies = dead_enemies
         self._state = self.animation_state.IDLE
         self.players = players
         self.player_target: None | Player = None
@@ -93,10 +94,15 @@ class AEnemy(AEntity):
         player_projectile_collisions = arcade.check_for_collision_with_list(self, self.player_projectile_list)
 
         if len(player_projectile_collisions) > 0:
+            print("ahhhhhhhhhhhhhhhhhh")
             self.player_projectile_list[0].kill()
+            self.state = self.animation_state.DEATH
+            placeholeder = self
             self.kill()
+            print("yes")
+            self.dead_enemies.append(placeholeder)
 
-        if len(enemy_collisions) >= 1 or len(player_collisions) > 0:
+        elif len(enemy_collisions) >= 1 or len(player_collisions) > 0:
             self.center_x -= self.change_x
             self.center_y -= self.change_y
             self.change_x = 0
@@ -142,12 +148,13 @@ class Skeleton(AEnemy):
     SPEED = 2
 
     def __init__(self, uid, players: arcade.SpriteList, enemy_array: arcade.SpriteList,
-                 player_projectile_list: arcade.SpriteList):
+                 player_projectile_list: arcade.SpriteList, dead_enemies: arcade.SpriteList):
         super().__init__(uid, Skeleton.SPEED, enemy_array, SkeletonAnimationState, players,
-                         SkeletonAnimationState.IDLE, Direction.RIGHT, player_projectile_list)
+                         SkeletonAnimationState.IDLE, Direction.RIGHT, player_projectile_list, dead_enemies)
 
         self.state = SkeletonAnimationState.IDLE
         self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"], self.position)
+        self.death_time = 0
 
     def update_state(self):
         distance_of_attack = 50
@@ -168,18 +175,26 @@ class Skeleton(AEnemy):
             self.state = SkeletonAnimationState.WALK
 
     def on_update(self, delta_time: float = 1 / 60) -> None:
-        self.update_enemy_speed(delta_time)
+        if self in self.dead_enemies:
+            self.state = SkeletonAnimationState.DEATH
+            time_to_die = 1.3
+            self.death_time += delta_time
+            if self.death_time > time_to_die:
+                self.kill()
+        else:
+            self.update_enemy_speed(delta_time)
 
-        self.center_x += self.change_x
-        self.center_y += self.change_y
+            self.center_x += self.change_x
+            self.center_y += self.change_y
 
-        self.check_collision()
+            self.check_collision()
 
-        self.update_state()
-        self.update_direction()
+            self.update_state()
+            self.update_direction()
 
-        self.set_animation_direction()
-        check_map_bounds(self)
+            self.set_animation_direction()
+            check_map_bounds(self)
+
 
     def update_enemy_speed(self, delta_time: float):
         if len(self.players) > 0:

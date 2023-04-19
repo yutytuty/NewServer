@@ -246,15 +246,17 @@ class Projectile(AEntity):
         self.distance = 0
         self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"], self.position) # TODO placeholder - make sprite
         self.max_distance = distance
+        print("origin", origin_x, origin_y)
+        print("target", target_x, target_y)
         self.origin_x = origin_x
         self.origin_y = origin_y
+
         direction = Vec2(target_x - origin_x, target_y - origin_y).normalize() * Projectile.SPEED
         self.change_x = direction.x
         self.change_y = direction.y
         self.angle = degrees(atan2(direction.y, direction.x))
 
     def on_update(self, delta_time: float = 1 / 60) -> None:
-        print("yay we did step 2")
         self.distance = sqrt(abs(self.origin_x - self.center_x) ** 2 + abs(self.origin_y - self.center_y) ** 2)
         self.center_x += self.change_x * delta_time
         self.center_y += self.change_y * delta_time

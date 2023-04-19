@@ -47,10 +47,10 @@ class World(arcade.Window):
 
         self.players.on_update(delta_time)
         self.enemies.on_update(delta_time)
-        if len(self.players) > 0:
-            print(self.players[0].center_x, self.players[0].center_y)
-        if len(self.projectiles) > 0:
-            print(self.projectiles[0].center_x, self.projectiles[0].center_y)
+        # if len(self.players) > 0:
+        #     print(self.players[0].center_x, self.players[0].center_y)
+        # if len(self.projectiles) > 0:
+        #     print(self.projectiles[0].center_x, self.projectiles[0].center_y)
         self.projectiles.on_update(delta_time)
 
     def get_visible_entities_for_player(self, player: Player):
@@ -117,7 +117,6 @@ def handle_client(conn: socket.socket, addr):
         while True:
             entities_to_send = world.get_visible_entities_for_player(player)
             server_update = messages.create_entity_update(entities_to_send)
-            print(server_update)
             conn.send(server_update.to_bytes_packed())
             data = messages.read_client_update(conn.recv(constants.BUFFER_SIZE))
             match data.which():
@@ -126,11 +125,12 @@ def handle_client(conn: socket.socket, addr):
                     player.change_x = update_vec.x
                     player.change_y = update_vec.y
                 case "shot":
+                    world.current_uid_lock.acquire(blocking=True)
                     projectile = Projectile(world.current_uid, player.center_x, player.center_y, data.shot.x,
                                             data.shot.y, "player")
                     world.current_uid += 1
                     world.projectiles.append(projectile)
-
+                    world.current_uid_lock.release()
 
     except Exception:
         if player:

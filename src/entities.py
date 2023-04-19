@@ -99,9 +99,11 @@ class AEnemy(AEntity):
         if len(player_projectile_collisions) > 0:
             self.player_projectile_list[0].kill()
             self.state = self.animation_state.DEATH
-            placeholeder = self
+            tmp = self
+            for projectile in player_projectile_collisions:
+                projectile.kill()
             self.kill()
-            self.dead_enemies.append(placeholeder)
+            self.dead_enemies.append(tmp)
 
         elif len(enemy_collisions) >= 1 or len(player_collisions) > 0:
             self.center_x -= self.change_x
@@ -347,11 +349,13 @@ class Archer(AEnemy):
 class Player(AEntity):
     SPEED = 5
 
-    def __int__(self, uid, current_uid, x, y):
+    def __init__(self, uid, current_uid, x, y, coin_list: arcade.SpriteList):
         super().__init__(uid, current_uid, x, y)
+        self.coin_list = coin_list
         self._hit_box = arcade.hitbox.HitBox(hitboxes_json["player"]["right"], (self.center_x, self.center_y), (2, 2))
         self.direction = Direction.RIGHT
         self.state = PlayerAnimationState.IDLE
+        self.coin_amount = 0
 
     def update_state(self):
         if self.change_x == 0 and self.change_y == 0:
@@ -375,6 +379,12 @@ class Player(AEntity):
         self.update_direction()
         self.update_state()
         check_map_bounds(self)
+
+        coin_collision_list = arcade.check_for_collision_with_list(self, self.coin_list)
+        if len(coin_collision_list) > 0:
+            for coin in coin_collision_list:
+                self.coin_amount += 1
+                coin.kill()
 
     def update_player_speed(self, delta_time: float):
         self.center_x += self.change_x
@@ -409,3 +419,8 @@ class Projectile(AEntity):
         self.center_y += self.change_y * delta_time
         if self.distance >= self.max_distance:
             self.remove_from_sprite_lists()
+
+
+class Coin(AEntity):
+    def __init__(self, uid, current_uid, x, y):
+        super().__init__(uid, current_uid, x, y)

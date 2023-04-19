@@ -9,6 +9,7 @@ from pyglet.math import Vec2
 import constants
 import messages
 import users
+from entities import Player, Skeleton, Projectile, Coin
 from entities import Player, Skeleton, Projectile, Archer
 from users import register, check_login
 
@@ -22,6 +23,8 @@ class World(arcade.Window):
     SLIME_AMOUNT = 0
     ARCHER_AMOUNT = 50
 
+    COIN_AMOUNT = 100
+
     def __init__(self):
         super().__init__()
 
@@ -30,6 +33,7 @@ class World(arcade.Window):
         self.enemies = arcade.SpriteList(use_spatial_hash=True)
         self.enemy_projectiles = arcade.SpriteList(use_spatial_hash=True)
         self.dead_enemies = arcade.SpriteList(use_spatial_hash=True)
+        self.coins = arcade.SpriteList(use_spatial_hash=True)
         self.current_uid = 1
         self.current_uid_lock = threading.Lock()
 
@@ -49,6 +53,15 @@ class World(arcade.Window):
             self.current_uid_lock.release()
             self.enemies.append(archer)
 
+        for i in range(World.COIN_AMOUNT):
+            self.current_uid_lock.acquire()
+            self.current_uid += 1
+            x = random.randint(constants.ITEM_SPAWN_LOCATION_RANGE_MIN, constants.ITEM_SPAWN_LOCATION_RANGE_MAX)
+            y = random.randint(constants.ITEM_SPAWN_LOCATION_RANGE_MIN, constants.ITEM_SPAWN_LOCATION_RANGE_MAX)
+            coin = Coin(self.current_uid, x, y)
+            self.current_uid_lock.release()
+            self.coins.append(coin)
+
         self.players_to_add = []
 
     def on_update(self, delta_time: float):
@@ -58,9 +71,7 @@ class World(arcade.Window):
 
         self.players.on_update(delta_time)
         self.enemies.on_update(delta_time)
-
         self.dead_enemies.on_update(delta_time)
-
         self.player_projectiles.on_update(delta_time)
         self.enemy_projectiles.on_update(delta_time)
 
@@ -75,6 +86,7 @@ class World(arcade.Window):
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.player_projectiles))
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.enemy_projectiles))
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.dead_enemies))
+        entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.coins))
         return entities_in_rect
 
     def check_movement(self, player: Player, new_x, new_y):
@@ -117,8 +129,9 @@ def handle_client(conn: socket.socket, addr):
             quit()
 
         world.current_uid_lock.acquire()
-        player = Player(world.current_uid, world.current_uid, start_x, start_y)
+        player = Player(world.current_uid, world.current_uid, start_x, start_y, world.coins)
         resp.success.playerid = player.uid
+        print(f"[{addr}] Sending {resp}")
         conn.send(resp.to_bytes_packed())
         world.current_uid += 1
         world.current_uid_lock.release()
@@ -134,7 +147,7 @@ def handle_client(conn: socket.socket, addr):
             data = messages.read_client_update(conn.recv(constants.BUFFER_SIZE))
             match data.which():
                 case "move":
-                    update_vec = Vec2(data.move.x, data.move.y).normalize() * player.SPEED
+                    update_vec = Vec2(data.move.x, data.move.y).normalize() * Player.SPEED
                     player.change_x = update_vec.x
                     player.change_y = update_vec.y
                 case "shot":
@@ -150,6 +163,7 @@ def handle_client(conn: socket.socket, addr):
         if player:
             if uuid:
                 users.set_last_logoff_location(uuid, player.center_x, player.center_y)
+                users.set_coin_amount(uuid, player.coin_amount)
                 print(f"[{addr}] Released lock for user with uuid", uuid)
                 users.set_lock_for_user(uuid, False)
             world.players.remove(player)

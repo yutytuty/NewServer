@@ -1,6 +1,6 @@
 import capnp
 
-from entities import Player, Skeleton, Projectile
+from entities import Player, Skeleton, Projectile, Archer
 
 capnp.remove_import_hook()
 server_update_capnp = capnp.load(
@@ -21,8 +21,12 @@ def create_entity_update(entities):
                 update.entitiesUpdate[i] = create_entity(entities[i].uid, "player", entities[i].state.value[0],
                                                          entities[i].direction.value,
                                                          entities[i].center_x, entities[i].center_y)
-            if isinstance(entities[i], Skeleton):
+            elif isinstance(entities[i], Skeleton):
                 update.entitiesUpdate[i] = create_entity(entities[i].uid, "skeleton", entities[i].state.value[0],
+                                                         entities[i].direction.value,
+                                                         entities[i].center_x, entities[i].center_y)
+            elif isinstance(entities[i], Archer):
+                update.entitiesUpdate[i] = create_entity(entities[i].uid, "archer", entities[i].state.value[0],
                                                          entities[i].direction.value,
                                                          entities[i].center_x, entities[i].center_y)
         if isinstance(entities[i], Projectile):

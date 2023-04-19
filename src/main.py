@@ -9,7 +9,7 @@ from pyglet.math import Vec2
 import constants
 import messages
 import users
-from entities import Player, Skeleton, Projectile
+from entities import Player, Skeleton, Projectile, Archer
 from users import register, check_login
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -18,9 +18,9 @@ s.listen(5)
 
 
 class World(arcade.Window):
-    SKELETON_AMOUNT = 100
+    SKELETON_AMOUNT = 50
     SLIME_AMOUNT = 0
-    ARCHER_AMOUNT = 0
+    ARCHER_AMOUNT = 50
 
     def __init__(self):
         super().__init__()
@@ -28,16 +28,26 @@ class World(arcade.Window):
         self.players = arcade.SpriteList(use_spatial_hash=True)
         self.player_projectiles = arcade.SpriteList(use_spatial_hash=True)
         self.enemies = arcade.SpriteList(use_spatial_hash=True)
+        self.enemy_projectiles = arcade.SpriteList(use_spatial_hash=True)
         self.dead_enemies = arcade.SpriteList(use_spatial_hash=True)
         self.current_uid = 1
         self.current_uid_lock = threading.Lock()
 
         for i in range(World.SKELETON_AMOUNT):
-            skeleton = Skeleton(self.current_uid, self.players, self.enemies, self.player_projectiles, self.dead_enemies)
+            skeleton = Skeleton(self.current_uid, self.current_uid_lock, self.players, self.enemies,
+                                self.player_projectiles, self.enemy_projectiles, self.dead_enemies)
             self.current_uid_lock.acquire()
             self.current_uid += 1
             self.current_uid_lock.release()
             self.enemies.append(skeleton)
+
+        for i in range(World.ARCHER_AMOUNT):
+            archer = Archer(self.current_uid, self.current_uid_lock, self.players, self.enemies,
+                            self.player_projectiles, self.enemy_projectiles, self.dead_enemies)
+            self.current_uid_lock.acquire()
+            self.current_uid += 1
+            self.current_uid_lock.release()
+            self.enemies.append(archer)
 
         self.players_to_add = []
 
@@ -52,6 +62,7 @@ class World(arcade.Window):
         self.dead_enemies.on_update(delta_time)
 
         self.player_projectiles.on_update(delta_time)
+        self.enemy_projectiles.on_update(delta_time)
 
     def get_visible_entities_for_player(self, player: Player):
         entities_in_rect = []
@@ -62,6 +73,7 @@ class World(arcade.Window):
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.players))
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.enemies))
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.player_projectiles))
+        entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.enemy_projectiles))
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.dead_enemies))
         return entities_in_rect
 
@@ -105,7 +117,7 @@ def handle_client(conn: socket.socket, addr):
             quit()
 
         world.current_uid_lock.acquire()
-        player = Player(world.current_uid, start_x, start_y)
+        player = Player(world.current_uid, world.current_uid, start_x, start_y)
         resp.success.playerid = player.uid
         conn.send(resp.to_bytes_packed())
         world.current_uid += 1
@@ -127,7 +139,8 @@ def handle_client(conn: socket.socket, addr):
                     player.change_y = update_vec.y
                 case "shot":
                     world.current_uid_lock.acquire(blocking=True)
-                    projectile = Projectile(world.current_uid, player.center_x, player.center_y, data.shot.x,
+                    projectile = Projectile(world.current_uid, world.current_uid, player.center_x, player.center_y,
+                                            data.shot.x,
                                             data.shot.y, "player")
                     world.current_uid += 1
                     world.player_projectiles.append(projectile)

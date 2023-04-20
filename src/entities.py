@@ -1,5 +1,6 @@
 import json
 import random
+import time
 from enum import Enum
 from math import atan2, degrees
 from math import sqrt
@@ -348,6 +349,8 @@ class Archer(AEnemy):
 
 class Player(AEntity):
     SPEED = 5
+    SKILL_3_SPEED_CHANGE = 3
+    ALPHA_CHANGE_ON_SKILL_3 = 100
 
     def __init__(self, uid, current_uid, x, y, coin_list: arcade.SpriteList):
         super().__init__(uid, current_uid, x, y)
@@ -357,6 +360,11 @@ class Player(AEntity):
         self.state = PlayerAnimationState.IDLE
         self.coin_amount = 0
         self.should_update_coin_amount = False
+        self.real_time = time.localtime()
+        self.last_skill_1_use = time.gmtime(0)
+        self.last_skill_2_use = time.gmtime(0)
+        self.last_skill_3_use = time.gmtime(0)
+        self.using_skill_3 = False
 
     def update_state(self):
         if self.change_x == 0 and self.change_y == 0:
@@ -381,6 +389,11 @@ class Player(AEntity):
         self.update_state()
         check_map_bounds(self)
 
+        self.real_time = time.localtime()
+        if abs(self.real_time.tm_sec - self.last_skill_3_use.tm_sec) >= 3 and self.using_skill_3:
+            self.using_skill_3 = False
+            self.alpha += Player.ALPHA_CHANGE_ON_SKILL_3
+
         coin_collision_list = arcade.check_for_collision_with_list(self, self.coin_list)
         if len(coin_collision_list) > 0:
             for coin in coin_collision_list:
@@ -389,10 +402,46 @@ class Player(AEntity):
                 coin.kill()
 
     def update_player_speed(self, delta_time: float):
+        if self.using_skill_3:
+            self.change_x *= 1.8
+            self.change_y *= 1.8
         self.center_x += self.change_x
         self.center_y += self.change_y
 
         # ToDo chenk collision and stuuf
+
+    def on_skill_1(self):
+        # projectile_path = ":data:bullet/0.png"
+        if abs(self.real_time.tm_sec - self.last_skill_1_use.tm_sec) >= 2: # and self.level >= 2:
+            print("used skill 1")
+        #     directions = [
+        #         [self.center_x, self.center_y + 1], [self.center_x + 1, self.center_y + 1],
+        #         [self.center_x + 1, self.center_y], [self.center_x + 1, self.center_y - 1],
+        #         [self.center_x, self.center_y - 1], [self.center_x - 1, self.center_y - 1],
+        #         [self.center_x - 1, self.center_y], [self.center_x - 1, self.center_y + 1]
+        #     ]
+        #
+        #     for i in range(8):
+        #         self.player_projectile_list.append(
+        #             Projectile(self.center_x, self.center_y, directions[i][0], directions[i][1], projectile_path, 2))
+            self.last_skill_1_use = self.real_time
+
+    def on_skill_2(self):
+        if abs(self.real_time.tm_sec - self.last_skill_2_use.tm_sec) >= 5: # and self.level >= 2:
+            print("used skill 2")
+            # if self.health_bar.health_points <= 80:
+            #     self.health_bar.health_points += 20
+            # elif self.health_bar.health_points <= 100:
+            #     self.health_bar.health_points = 100
+            # else:
+            #     return
+            self.last_skill_2_use = self.real_time
+
+    def on_skill_3(self):
+        if abs(self.real_time.tm_sec - self.last_skill_3_use.tm_sec) >= 7: # and self.level >= 3:
+            self.using_skill_3 = True
+            self.last_skill_3_use = self.real_time
+            self.alpha -= Player.ALPHA_CHANGE_ON_SKILL_3
 
 
 class Projectile(AEntity):

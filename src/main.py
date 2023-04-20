@@ -19,21 +19,20 @@ s.listen(5)
 
 
 class World(arcade.Window):
-    SKELETON_AMOUNT = 50
-    SLIME_AMOUNT = 0
-    ARCHER_AMOUNT = 50
+    SKELETON_AMOUNT = 20
+    ARCHER_AMOUNT = 20
 
-    COIN_AMOUNT = 100
+    COIN_AMOUNT = 20
 
     def __init__(self):
         super().__init__()
 
-        self.players = arcade.SpriteList(use_spatial_hash=True)
-        self.player_projectiles = arcade.SpriteList(use_spatial_hash=True)
-        self.enemies = arcade.SpriteList(use_spatial_hash=True)
-        self.enemy_projectiles = arcade.SpriteList(use_spatial_hash=True)
-        self.dead_enemies = arcade.SpriteList(use_spatial_hash=True)
-        self.coins = arcade.SpriteList(use_spatial_hash=True)
+        self.players = arcade.SpriteList(use_spatial_hash=True, lazy=True)
+        self.player_projectiles = arcade.SpriteList(use_spatial_hash=True, lazy=True)
+        self.enemies = arcade.SpriteList(use_spatial_hash=True, lazy=True)
+        self.enemy_projectiles = arcade.SpriteList(use_spatial_hash=True, lazy=True)
+        self.dead_enemies = arcade.SpriteList(use_spatial_hash=True, lazy=True)
+        self.coins = arcade.SpriteList(use_spatial_hash=True, lazy=True)
         self.current_uid = 1
         self.current_uid_lock = threading.Lock()
 
@@ -131,6 +130,9 @@ def handle_client(conn: socket.socket, addr):
         world.current_uid_lock.acquire()
         player = Player(world.current_uid, world.current_uid, start_x, start_y, world.coins)
         resp.success.playerid = player.uid
+        coin_amount = users.get_coin_amount(uuid)
+        resp.success.coinamount = coin_amount
+        player.coin_amount = coin_amount
         print(f"[{addr}] Sending {resp}")
         conn.send(resp.to_bytes_packed())
         world.current_uid += 1
@@ -144,6 +146,10 @@ def handle_client(conn: socket.socket, addr):
             entities_to_send = world.get_visible_entities_for_player(player)
             server_update = messages.create_entity_update(entities_to_send)
             conn.send(server_update.to_bytes_packed())
+            if player.should_update_coin_amount:
+                item_update = messages.create_item_update("coin", 1)
+                conn.send(item_update.to_bytes_packed())
+                player.should_update_coin_amount = False
             data = messages.read_client_update(conn.recv(constants.BUFFER_SIZE))
             match data.which():
                 case "move":

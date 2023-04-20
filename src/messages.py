@@ -72,3 +72,8 @@ def create_identification_response_success(player_id: int):
 def create_empty_identification_response_success():
     return identification_capnp.IdentificationResponse.new_message(
         success=identification_capnp.SuccessInformation.new_message())
+
+
+def create_item_update(item_type: str, change: int):
+    return server_update_capnp.ServerUpdate.new_message(
+        itemAdditionUpdate=server_update_capnp.ItemAdditionUpdate.new_message(item=item_type, change=change))

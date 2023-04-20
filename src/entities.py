@@ -356,6 +356,7 @@ class Player(AEntity):
         self.direction = Direction.RIGHT
         self.state = PlayerAnimationState.IDLE
         self.coin_amount = 0
+        self.should_update_coin_amount = False
 
     def update_state(self):
         if self.change_x == 0 and self.change_y == 0:
@@ -384,6 +385,7 @@ class Player(AEntity):
         if len(coin_collision_list) > 0:
             for coin in coin_collision_list:
                 self.coin_amount += 1
+                self.should_update_coin_amount = True
                 coin.kill()
 
     def update_player_speed(self, delta_time: float):

@@ -43,6 +43,7 @@ def init():
         "    last_logoff_location_y FLOAT DEFAULT -1,"
         "    coin_amount INT DEFAULT 0,"
         "    xp_amount INT DEFAULT 0,"
+        "    mushroom_amount INT DEFAULT 0,"
         "    is_locked BOOLEAN DEFAULT 0"
         ")"
     )
@@ -139,6 +140,27 @@ def set_xp_amount(uuid: UUID, amount: int):
     global cursor_lock
     cursor_lock.acquire(blocking=True)
     sql = "UPDATE users SET xp_amount = %s WHERE uuid = %s"
+    val = (amount, str(uuid))
+    cursor.execute(sql, val)
+    db.commit()
+    cursor_lock.release()
+
+
+def get_mushroom_amount(uuid: UUID) -> int:
+    global cursor_lock
+    cursor_lock.acquire(blocking=True)
+    sql = "SELECT mushroom_amount FROM users WHERE uuid = %s"
+    val = (str(uuid),)
+    cursor.execute(sql, val)
+    amount = cursor.fetchone()[0]
+    cursor_lock.release()
+    return amount
+
+
+def set_mushroom_amount(uuid: UUID, amount: int):
+    global cursor_lock
+    cursor_lock.acquire(blocking=True)
+    sql = "UPDATE users SET mushroom_amount = %s WHERE uuid = %s"
     val = (amount, str(uuid))
     cursor.execute(sql, val)
     db.commit()

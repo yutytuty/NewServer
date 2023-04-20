@@ -58,10 +58,13 @@ def handle_client(conn: socket.socket, addr):
         resp.success.playerid = player.uid
         coin_amount = users.get_coin_amount(uuid)
         xp_amount = users.get_xp_amount(uuid)
+        mushroom_amount = users.get_mushroom_amount(uuid)
         resp.success.coinamount = coin_amount
         resp.success.xpamount = xp_amount
+        resp.success.mushroomamount = mushroom_amount
         player.coin_amount = coin_amount
         player.xp_amount = xp_amount
+        player.mushroom_amount = mushroom_amount
         print(f"[{addr}] Sending {resp}")
         conn.send(resp.to_bytes_packed())
         World.get_instance().current_uid += 1
@@ -81,6 +84,10 @@ def handle_client(conn: socket.socket, addr):
                 player.should_update_coin_amount = False
             if player.should_update_xp_amount:
                 item_update = messages.create_item_update("xp", 1)
+                conn.send(item_update.to_bytes_packed())
+                player.should_update_coin_amount = False
+            if player.should_update_mushroom_amount:
+                item_update = messages.create_item_update("mushroom", 1)
                 conn.send(item_update.to_bytes_packed())
                 player.should_update_coin_amount = False
             data = messages.read_client_update(conn.recv(constants.BUFFER_SIZE))
@@ -113,6 +120,7 @@ def handle_client(conn: socket.socket, addr):
                 users.set_last_logoff_location(uuid, player.center_x, player.center_y)
                 users.set_coin_amount(uuid, player.coin_amount)
                 users.set_xp_amount(uuid, player.xp_amount)
+                users.set_mushroom_amount(uuid, player.mushroom_amount)
                 print(f"[{addr}] Released lock for user with uuid", uuid)
                 users.set_lock_for_user(uuid, False)
             World.get_instance().players.remove(player)

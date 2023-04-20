@@ -147,6 +147,26 @@ class AEnemy(AEntity):
     def shoot(self):
         pass
 
+    def kill(self) -> None:
+        choices = [Coin, Mushroom, XP]
+        random.shuffle(choices)
+        world = World.get_instance()
+        world.current_uid_lock.acquire(blocking=True)
+        results = choices[:2]
+        for result in results:
+            if result == Coin:
+                world.coins.append(
+                    Coin(world.current_uid, self.center_x + random.randint(3, 5), self.center_y + random.randint(3, 5)))
+            elif result == Mushroom:
+                world.mushrooms.append(Mushroom(world.current_uid, self.center_x + random.randint(3, 5),
+                                                self.center_y + random.randint(3, 5)))
+            else:
+                world.xps.append(
+                    XP(world.current_uid, self.center_x + random.randint(3, 5), self.center_y + random.randint(3, 5)))
+            world.current_uid += 1
+        world.current_uid_lock.release()
+        super().kill()
+
 
 class Skeleton(AEnemy):
     SPEED = 2
@@ -344,24 +364,6 @@ class Archer(AEnemy):
             self.direction = Direction.RIGHT
             self.hit_box = arcade.hitbox.HitBox(hitboxes_json["archer"]["right"], self.position)
 
-    def kill(self) -> None:
-        if random.random() < 0.5:
-            World.get_instance().current_uid_lock.acquire(blocking=True)
-            World.get_instance().xps.append(
-                XP(World.get_instance().current_uid, self.center_x + random.randint(3, 5),
-                   self.center_y + random.randint(3, 5)))
-            World.get_instance().current_uid += 1
-            World.get_instance().current_uid_lock.release()
-        if random.random() < 0.5:
-            World.get_instance().current_uid_lock.acquire(blocking=True)
-            World.get_instance().coins.append(
-                Coin(World.get_instance().current_uid, self.center_x + random.randint(3, 5),
-                     self.center_y + random.randint(3, 5))
-            )
-            World.get_instance().current_uid += 1
-            World.get_instance().current_uid_lock.release()
-        super().kill()
-
 
 class Player(AEntity):
     SPEED = 5
@@ -376,8 +378,10 @@ class Player(AEntity):
         self.state = PlayerAnimationState.IDLE
         self.coin_amount = 0
         self.xp_amount = 0
+        self.mushroom_amount = 0
         self.should_update_coin_amount = False
         self.should_update_xp_amount = False
+        self.should_update_mushroom_amount = False
         self.real_time = time.localtime()
         self.last_skill_1_use = time.gmtime(0)
         self.last_skill_2_use = time.gmtime(0)
@@ -425,6 +429,13 @@ class Player(AEntity):
                 self.xp_amount += 1
                 self.should_update_xp_amount = True
                 xp.kill()
+
+        mushroom_collision_list = arcade.check_for_collision_with_list(self, World.get_instance().mushrooms)
+        if len(mushroom_collision_list) > 0:
+            for mushroom in mushroom_collision_list:
+                self.mushroom_amount += 1
+                self.should_update_mushroom_amount = True
+                mushroom.kill()
 
     def update_player_speed(self, delta_time: float):
         if self.using_skill_3:
@@ -504,5 +515,10 @@ class XP(AEntity):
 
 
 class Coin(AEntity):
+    def __init__(self, uid, x, y):
+        super().__init__(uid, x, y)
+
+
+class Mushroom(AEntity):
     def __init__(self, uid, x, y):
         super().__init__(uid, x, y)

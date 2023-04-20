@@ -9,10 +9,9 @@ from pyglet.math import Vec2
 import constants
 import messages
 import users
-from entities import Coin
-from entities import Player, Skeleton, Projectile, Archer
-from world import World
+from entities import Player, Projectile
 from users import register, check_login
+from world import World
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(("localhost", constants.PORT))
@@ -58,8 +57,11 @@ def handle_client(conn: socket.socket, addr):
         player = Player(World.get_instance().current_uid, start_x, start_y, World.get_instance().coins)
         resp.success.playerid = player.uid
         coin_amount = users.get_coin_amount(uuid)
+        xp_amount = users.get_xp_amount(uuid)
         resp.success.coinamount = coin_amount
+        resp.success.xpamount = xp_amount
         player.coin_amount = coin_amount
+        player.xp_amount = xp_amount
         print(f"[{addr}] Sending {resp}")
         conn.send(resp.to_bytes_packed())
         World.get_instance().current_uid += 1
@@ -75,6 +77,10 @@ def handle_client(conn: socket.socket, addr):
             conn.send(server_update.to_bytes_packed())
             if player.should_update_coin_amount:
                 item_update = messages.create_item_update("coin", 1)
+                conn.send(item_update.to_bytes_packed())
+                player.should_update_coin_amount = False
+            if player.should_update_xp_amount:
+                item_update = messages.create_item_update("xp", 1)
                 conn.send(item_update.to_bytes_packed())
                 player.should_update_coin_amount = False
             data = messages.read_client_update(conn.recv(constants.BUFFER_SIZE))
@@ -106,6 +112,7 @@ def handle_client(conn: socket.socket, addr):
             if uuid:
                 users.set_last_logoff_location(uuid, player.center_x, player.center_y)
                 users.set_coin_amount(uuid, player.coin_amount)
+                users.set_xp_amount(uuid, player.xp_amount)
                 print(f"[{addr}] Released lock for user with uuid", uuid)
                 users.set_lock_for_user(uuid, False)
             World.get_instance().players.remove(player)

@@ -344,6 +344,24 @@ class Archer(AEnemy):
             self.direction = Direction.RIGHT
             self.hit_box = arcade.hitbox.HitBox(hitboxes_json["archer"]["right"], self.position)
 
+    def kill(self) -> None:
+        if random.random() < 0.5:
+            World.get_instance().current_uid_lock.acquire(blocking=True)
+            World.get_instance().xps.append(
+                XP(World.get_instance().current_uid, self.center_x + random.randint(3, 5),
+                   self.center_y + random.randint(3, 5)))
+            World.get_instance().current_uid += 1
+            World.get_instance().current_uid_lock.release()
+        if random.random() < 0.5:
+            World.get_instance().current_uid_lock.acquire(blocking=True)
+            World.get_instance().coins.append(
+                Coin(World.get_instance().current_uid, self.center_x + random.randint(3, 5),
+                     self.center_y + random.randint(3, 5))
+            )
+            World.get_instance().current_uid += 1
+            World.get_instance().current_uid_lock.release()
+        super().kill()
+
 
 class Player(AEntity):
     SPEED = 5
@@ -357,7 +375,9 @@ class Player(AEntity):
         self.direction = Direction.RIGHT
         self.state = PlayerAnimationState.IDLE
         self.coin_amount = 0
+        self.xp_amount = 0
         self.should_update_coin_amount = False
+        self.should_update_xp_amount = False
         self.real_time = time.localtime()
         self.last_skill_1_use = time.gmtime(0)
         self.last_skill_2_use = time.gmtime(0)
@@ -398,6 +418,13 @@ class Player(AEntity):
                 self.coin_amount += 1
                 self.should_update_coin_amount = True
                 coin.kill()
+
+        xp_collision_list = arcade.check_for_collision_with_list(self, World.get_instance().xps)
+        if len(xp_collision_list) > 0:
+            for xp in xp_collision_list:
+                self.xp_amount += 1
+                self.should_update_xp_amount = True
+                xp.kill()
 
     def update_player_speed(self, delta_time: float):
         if self.using_skill_3:
@@ -469,6 +496,11 @@ class Projectile(AEntity):
         self.center_y += self.change_y * delta_time
         if self.distance >= self.max_distance:
             self.remove_from_sprite_lists()
+
+
+class XP(AEntity):
+    def __init__(self, uid, x, y):
+        super().__init__(uid, x, y)
 
 
 class Coin(AEntity):

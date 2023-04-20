@@ -29,7 +29,7 @@ def init():
     db = mysql.connector.connect(
         host=constants.DB_HOST,
         user=constants.DB_USER,
-        password=password,
+        password="no_need_for_security",
         database="game"
     )
 

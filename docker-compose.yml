@@ -10,16 +10,16 @@ services:
     secrets:
       - db_password
   db:
-    image: "docker.io/mariadb:10"
+    image: "docker.io/mysql:8"
     volumes:
       - type: volume
         source: db_data
         target: /var/lib/mysql
     environment:
-      MARIADB_DATABASE: cca
-      MARIADB_USER: gameserver
-      MARIADB_PASSWORD_FILE: /run/secrets/db_password
-      MARIADB_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: game
+      MYSQL_USER: gameserver
+      MYSQL_PASSWORD: no_need_for_security
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
     secrets:
       - db_password
 secrets:

@@ -1,6 +1,8 @@
+from pathlib import PurePath
+
 import arcade
 
-import constants
+from . import constants
 
 
 def check_map_bounds(sprite: arcade.Sprite):
@@ -13,3 +15,7 @@ def check_map_bounds(sprite: arcade.Sprite):
         sprite.bottom = 0
     if sprite.top > constants.MAP_HEIGHT - 1:
         sprite.top = constants.MAP_HEIGHT - 1
+
+def relative_open(filename: str, *args, **kwargs):
+    return open(PurePath(__file__).parent.joinpath(filename), *args, **kwargs)
+

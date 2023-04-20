@@ -1,0 +1,12 @@
+# Security-critical files
+db_passwd.txt
+
+# Generated files
+**/__pycache__
+
+# IDE files
+.venv
+.idea
+
+# Misc. files_
+**/.gitignore

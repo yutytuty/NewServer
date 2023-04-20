@@ -1,0 +1,28 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "cca_server"
+authors = [
+	{name = "Yael Eliraz"},
+	{name = "Uri Goldfinger", email = "golduri27@gmail.com"},
+	{name = "Yotam Yizhar", email = "yotamyizhar@gmail.com"},
+	{name = "Amit Goren", email = "animalfarm@mailfence.com"},
+	{name = "Shlomo Gdolevich", email = "shlomogdd@gmail.com"},
+	{name = "Roei Yishay", email = "roeiyishayry@gmail.com"}
+]
+
+dependencies = [
+	"arcade == 3.0.0.dev20",
+	"mysql-connector-python ~= 8.0.32",
+	"colossalcyberadventuremessages @ git+https://AmitDIRTYC0W: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@github.com/AmitDIRTYC0W/ColossalCyberAdventureMessages.git#trunk"
+]
+requires-python = ">=3.10"
+dynamic = ['version', 'description']
+
+[project.urls]
+Source = "https://github.com/yutytuty/NewServer"
+
+[project.scripts]
+cca-server = "cca_server.main:main"

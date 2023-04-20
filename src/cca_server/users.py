@@ -7,7 +7,7 @@ import mysql.connector
 from mysql.connector import MySQLConnection
 from mysql.connector.cursor import MySQLCursor
 
-import constants
+from . import constants
 
 
 class UserAlreadyLoggedInError(Exception):

@@ -8,11 +8,11 @@ from math import sqrt
 import arcade
 from pyglet.math import Vec2
 
-import constants
-from common import check_map_bounds
-from world import World
+from .common import check_map_bounds, relative_open
+from . import constants
 
-fp = open("hitboxes.json", "r")
+
+fp = relative_open("hitboxes.json", "r")
 hitboxes_json = json.load(fp)
 fp.close()
 

@@ -1,0 +1,30 @@
+version: "3.9"
+services:
+  server:
+    build:
+      context: .
+    depends_on:
+      - "db"
+    ports:
+      - "1354:1354/udp"
+    secrets:
+      - db_password
+  db:
+    image: "docker.io/mariadb:10"
+    volumes:
+      - type: volume
+        source: db_data
+        target: /var/lib/mysql
+    environment:
+      MARIADB_DATABASE: cca
+      MARIADB_USER: gameserver
+      MARIADB_PASSWORD_FILE: /run/secrets/db_password
+      MARIADB_RANDOM_ROOT_PASSWORD: "yes"
+    secrets:
+      - db_password
+secrets:
+  db_password:
+    file: db_passwd.txt
+volumes:
+  db_data: 
+

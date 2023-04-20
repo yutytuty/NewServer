@@ -25,6 +25,7 @@ class World(arcade.Window):
         self.enemy_projectiles = arcade.SpriteList(use_spatial_hash=True, lazy=True)
         self.dead_enemies = arcade.SpriteList(use_spatial_hash=True, lazy=True)
         self.coins = arcade.SpriteList(use_spatial_hash=True, lazy=True)
+        self.xps = arcade.SpriteList(use_spatial_hash=True, lazy=True)
         self.current_uid = 1
         self.current_uid_lock = threading.Lock()
 
@@ -84,6 +85,7 @@ class World(arcade.Window):
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.enemy_projectiles))
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.dead_enemies))
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.coins))
+        entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.xps))
         return entities_in_rect
 
     def check_movement(self, player, new_x, new_y):

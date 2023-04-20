@@ -1,7 +1,7 @@
 import capnp
 
 import src
-from entities import Archer
+from entities import Archer, XP
 from entities import Player, Skeleton, Projectile, Coin
 
 capnp.remove_import_hook()
@@ -37,8 +37,12 @@ def create_entity_update(entities):
             update.entitiesUpdate[i] = create_non_animated_entity(entities[i].uid, bullet_kind,
                                                                   entities[i].center_x, entities[i].center_y)
 
-        if isinstance(entities[i], Coin):  # Don't know why the fuck I need to add src, but it works
+        if isinstance(entities[i], Coin):
             update.entitiesUpdate[i] = create_non_animated_entity(entities[i].uid, "coin", entities[i].center_x,
+                                                                  entities[i].center_y)
+
+        if isinstance(entities[i], XP):
+            update.entitiesUpdate[i] = create_non_animated_entity(entities[i].uid, "xp", entities[i].center_x,
                                                                   entities[i].center_y)
 
     return update

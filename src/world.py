@@ -8,7 +8,7 @@ from src import constants
 
 class World(arcade.Window):
     SKELETON_AMOUNT = 20
-    ARCHER_AMOUNT = 100
+    ARCHER_AMOUNT = 15
 
     COIN_AMOUNT = 50
 

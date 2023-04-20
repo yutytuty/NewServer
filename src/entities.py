@@ -100,6 +100,29 @@ class AEnemy(AEntity):
                 projectile.kill()
             self.kill()
             self.dead_enemies.append(tmp)
+            # create 2 random objects
+            objects = ["coin", "shroom"]  # todo insert future items
+            award = random.sample(objects, 2)
+            for i in range(0, 2):
+                kind = award[i]
+                if kind == 'coin':
+                    World.current_uid_lock.aquire()
+                    World.current_uid += 1
+                    x = self.center_x + i * 50  # to prevent the creationat the exact same place, might need change
+                    y = self.center_y
+                    coin = Coin(World.current_uid, x, y)
+                    World.current_uid_lock.release()
+                    World.coins.append(coin)
+
+                if kind == "shroom":
+                    World.current_uid_lock.aquire()
+                    World.current_uid += 1
+                    x = self.center_x + i * 50  # to prevent the creation at the exact same place, might need change
+                    y = self.center_y
+                    shroom = HealthShroom(self.current_uid, x, y)
+                    self.current_uid_lock.release()
+                    self.shrooms.append(shroom)
+
 
         elif len(enemy_collisions) >= 1 or len(player_collisions) > 0:
             self.center_x -= self.change_x

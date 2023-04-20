@@ -54,7 +54,9 @@ def handle_client(conn: socket.socket, addr):
             quit()
 
         World.get_instance().current_uid_lock.acquire()
-        player = Player(World.get_instance().current_uid, start_x, start_y, World.get_instance().coins)
+        world = World.get_instance()
+        player = Player(world.current_uid, start_x, start_y, World.get_instance().coins, world.enemies, world.players,
+                        world.player_projectiles, world.enemy_projectiles)
         resp.success.playerid = player.uid
         coin_amount = users.get_coin_amount(uuid)
         xp_amount = users.get_xp_amount(uuid)
@@ -75,9 +77,18 @@ def handle_client(conn: socket.socket, addr):
         print(f"[{addr}] locked user with uuid", str(uuid))
         print(f"[{addr}] String server update loop")
         while True:
+            # entities:
             entities_to_send = World.get_instance().get_visible_entities_for_player(player)
             server_update = messages.create_entity_update(entities_to_send)
             conn.send(server_update.to_bytes_packed())
+
+            # health:
+            if player.should_update_health_amount:
+                health_point_update = messages.create_health_update(player.hp)
+                conn.send(health_point_update.to_bytes_packed())
+                player.should_update_health_amount = False
+
+            # coins:
             if player.should_update_coin_amount:
                 item_update = messages.create_item_update("coin", 1)
                 conn.send(item_update.to_bytes_packed())

@@ -8,8 +8,8 @@ from math import sqrt
 import arcade
 from pyglet.math import Vec2
 
-from common import check_map_bounds
 import constants
+from common import check_map_bounds
 from world import World
 
 fp = open("hitboxes.json", "r")
@@ -74,12 +74,12 @@ class AEnemy(AEntity):
         super().__init__(uid, x, y)
 
         self.speed = speed
-        self.enemy_array = enemy_array
         self.animation_state = animation_state
         self.dead_enemies = dead_enemies
         self._state = self.animation_state.IDLE
         self.players = players
         self.player_target: None | Player = None
+        self.enemy_array = enemy_array
         self.state = initial_state
         self.direction = initial_direction
         self.player_projectile_list = player_projectile_list
@@ -197,7 +197,7 @@ class Skeleton(AEnemy):
                     time_to_attack = 1.3
                     self.attack_time += delta_time
                     if self.attack_time > time_to_attack:
-                        # TODO attack - remove hp...
+                        self.player_target.on_health_change(-2)  # reduces player health
                         self.attack_time = 0
                 else:
                     self.attack_time = 0
@@ -370,12 +370,19 @@ class Player(AEntity):
     SKILL_3_SPEED_CHANGE = 3
     ALPHA_CHANGE_ON_SKILL_3 = 100
 
-    def __init__(self, uid, x, y, coin_list: arcade.SpriteList):
+    def __init__(self, uid, x, y, coin_list: arcade.SpriteList, enemy_array: arcade.SpriteList,
+                 players: arcade.SpriteList, player_projectile_list: arcade.SpriteList,
+                 enemy_projectile_list: arcade.SpriteList, ):
         super().__init__(uid, x, y)
         self.coin_list = coin_list
         self._hit_box = arcade.hitbox.HitBox(hitboxes_json["player"]["right"], (self.center_x, self.center_y), (2, 2))
         self.direction = Direction.RIGHT
         self.state = PlayerAnimationState.IDLE
+        self.players = players
+        self.enemy_array = enemy_array
+        self.player_projectile_list = player_projectile_list
+        self.enemy_projectile_list = enemy_projectile_list
+
         self.coin_amount = 0
         self.xp_amount = 0
         self.mushroom_amount = 0
@@ -387,6 +394,8 @@ class Player(AEntity):
         self.last_skill_2_use = time.gmtime(0)
         self.last_skill_3_use = time.gmtime(0)
         self.using_skill_3 = False
+        self.should_update_health_amount = False
+        self.hp = 80
 
     def update_state(self):
         if self.change_x == 0 and self.change_y == 0:
@@ -406,7 +415,9 @@ class Player(AEntity):
     def on_update(self, delta_time: float = 1 / 60) -> None:
         self.update_player_speed(delta_time)
         # # ToDo dont let the player walk wherever they want (check distance he moved and check he is not colliding
-        #
+
+        self.check_collision()
+
         self.update_direction()
         self.update_state()
         check_map_bounds(self)
@@ -446,6 +457,23 @@ class Player(AEntity):
 
         # ToDo chenk collision and stuuf
 
+    def check_collision(self):
+        # enemy_collisions = arcade.check_for_collision_with_list(self, self.enemy_array)
+        # player_collisions = arcade.check_for_collision_with_list(self, self.players)
+        enemy_projectile_collisions = arcade.check_for_collision_with_list(self, self.enemy_projectile_list)
+
+        if len(enemy_projectile_collisions) > 0:
+            for projectile in enemy_projectile_collisions:
+                self.on_health_change(-1)
+                projectile.kill()
+
+        # elif len(enemy_collisions) >= 1 or len(player_collisions) > 0:
+        #     self.center_x -= self.change_x
+        #     self.center_y -= self.change_y
+        #     self.change_x = 0
+        #     self.change_y = 0
+        #     self._state = self.animation_state.IDLE
+
     def on_skill_1(self):
         # projectile_path = ":data:bullet/0.png"
         if abs(self.real_time.tm_sec - self.last_skill_1_use.tm_sec) >= 2:  # and self.level >= 2:
@@ -464,13 +492,13 @@ class Player(AEntity):
 
     def on_skill_2(self):
         if abs(self.real_time.tm_sec - self.last_skill_2_use.tm_sec) >= 5:  # and self.level >= 2:
-            print("used skill 2")
-            # if self.health_bar.health_points <= 80:
-            #     self.health_bar.health_points += 20
-            # elif self.health_bar.health_points <= 100:
-            #     self.health_bar.health_points = 100
-            # else:
-            #     return
+            if self.hp <= 80:
+                self.on_health_change(20)
+            elif self.hp <= 100:
+                hp_to_add = 100 - self.hp
+                self.on_health_change(hp_to_add)
+            else:
+                return
             self.last_skill_2_use = self.real_time
 
     def on_skill_3(self):
@@ -478,6 +506,10 @@ class Player(AEntity):
             self.using_skill_3 = True
             self.last_skill_3_use = self.real_time
             self.alpha -= Player.ALPHA_CHANGE_ON_SKILL_3
+
+    def on_health_change(self, change_amount):
+        self.hp += change_amount
+        self.should_update_health_amount = True
 
 
 class Projectile(AEntity):

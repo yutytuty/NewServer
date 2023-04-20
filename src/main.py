@@ -37,7 +37,7 @@ class World(arcade.Window):
         self.current_uid_lock = threading.Lock()
 
         for i in range(World.SKELETON_AMOUNT):
-            skeleton = Skeleton(self.current_uid, self.current_uid_lock, self.players, self.enemies,
+            skeleton = Skeleton(self.current_uid, self.players, self.enemies,
                                 self.player_projectiles, self.enemy_projectiles, self.dead_enemies)
             self.current_uid_lock.acquire()
             self.current_uid += 1
@@ -45,7 +45,7 @@ class World(arcade.Window):
             self.enemies.append(skeleton)
 
         for i in range(World.ARCHER_AMOUNT):
-            archer = Archer(self.current_uid, self.current_uid_lock, self.players, self.enemies,
+            archer = Archer(self.current_uid, self.players, self.enemies,
                             self.player_projectiles, self.enemy_projectiles, self.dead_enemies)
             self.current_uid_lock.acquire()
             self.current_uid += 1
@@ -57,7 +57,7 @@ class World(arcade.Window):
             self.current_uid += 1
             x = random.randint(constants.ITEM_SPAWN_LOCATION_RANGE_MIN, constants.ITEM_SPAWN_LOCATION_RANGE_MAX)
             y = random.randint(constants.ITEM_SPAWN_LOCATION_RANGE_MIN, constants.ITEM_SPAWN_LOCATION_RANGE_MAX)
-            coin = Coin(self.current_uid, self.current_uid, x, y)
+            coin = Coin(self.current_uid, x, y)
             self.current_uid_lock.release()
             self.coins.append(coin)
 
@@ -128,7 +128,7 @@ def handle_client(conn: socket.socket, addr):
             quit()
 
         world.current_uid_lock.acquire()
-        player = Player(world.current_uid, world.current_uid, start_x, start_y, world.coins)
+        player = Player(world.current_uid, start_x, start_y, world.coins)
         resp.success.playerid = player.uid
         coin_amount = users.get_coin_amount(uuid)
         resp.success.coinamount = coin_amount
@@ -158,7 +158,7 @@ def handle_client(conn: socket.socket, addr):
                     player.change_y = update_vec.y
                 case "shot":
                     world.current_uid_lock.acquire(blocking=True)
-                    projectile = Projectile(world.current_uid, world.current_uid, player.center_x, player.center_y,
+                    projectile = Projectile(world.current_uid, player.center_x, player.center_y,
                                             data.shot.x,
                                             data.shot.y, "player")
                     world.current_uid += 1

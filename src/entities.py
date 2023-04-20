@@ -52,10 +52,9 @@ class Direction(Enum):
 
 
 class AEntity(arcade.Sprite):
-    def __init__(self, uid, current_uid, x, y):
+    def __init__(self, uid, x, y):
         super().__init__(center_x=x, center_y=y)
         self.uid = uid
-        self.current_uid = current_uid
         self.direction = Direction.RIGHT
         self.state = None
         self.change_x = 0
@@ -66,12 +65,12 @@ class AEntity(arcade.Sprite):
 
 
 class AEnemy(AEntity):
-    def __init__(self, uid, current_uid, speed, enemy_array, animation_state, players: arcade.SpriteList, initial_state,
+    def __init__(self, uid, speed, enemy_array, animation_state, players: arcade.SpriteList, initial_state,
                  initial_direction, player_projectile_list: arcade.SpriteList, enemy_projectile_list: arcade.SpriteList,
                  dead_enemies: arcade.SpriteList,
                  x=random.randint(constants.ENEMY_SPAWN_LOCATION_RANGE_MIN, constants.ENEMY_SPAWN_LOCATION_RANGE_MAX),
                  y=random.randint(constants.ENEMY_SPAWN_LOCATION_RANGE_MIN, constants.ENEMY_SPAWN_LOCATION_RANGE_MAX)):
-        super().__init__(uid, current_uid, x, y)
+        super().__init__(uid, x, y)
 
         self.speed = speed
         self.enemy_array = enemy_array
@@ -151,10 +150,10 @@ class AEnemy(AEntity):
 class Skeleton(AEnemy):
     SPEED = 2
 
-    def __init__(self, uid, current_uid, players: arcade.SpriteList, enemy_array: arcade.SpriteList,
+    def __init__(self, uid, players: arcade.SpriteList, enemy_array: arcade.SpriteList,
                  player_projectile_list: arcade.SpriteList, enemy_projectile_list: arcade.SpriteList,
                  dead_enemies: arcade.SpriteList):
-        super().__init__(uid, current_uid, Skeleton.SPEED, enemy_array, SkeletonAnimationState, players,
+        super().__init__(uid, Skeleton.SPEED, enemy_array, SkeletonAnimationState, players,
                          SkeletonAnimationState.IDLE, Direction.RIGHT, player_projectile_list, enemy_projectile_list,
                          dead_enemies)
 
@@ -238,10 +237,10 @@ class Skeleton(AEnemy):
 class Archer(AEnemy):
     SPEED = 3
 
-    def __init__(self, uid, current_uid, players: arcade.SpriteList, enemy_array: arcade.SpriteList,
+    def __init__(self, uid, players: arcade.SpriteList, enemy_array: arcade.SpriteList,
                  player_projectile_list: arcade.SpriteList, enemy_projectile_list: arcade.SpriteList,
                  dead_enemies: arcade.SpriteList):
-        super().__init__(uid, current_uid, Archer.SPEED, enemy_array, ArcherAnimationState, players,
+        super().__init__(uid, Archer.SPEED, enemy_array, ArcherAnimationState, players,
                          ArcherAnimationState.IDLE, Direction.RIGHT, player_projectile_list, enemy_projectile_list,
                          dead_enemies)
 
@@ -352,8 +351,8 @@ class Player(AEntity):
     SKILL_3_SPEED_CHANGE = 3
     ALPHA_CHANGE_ON_SKILL_3 = 100
 
-    def __init__(self, uid, current_uid, x, y, coin_list: arcade.SpriteList):
-        super().__init__(uid, current_uid, x, y)
+    def __init__(self, uid, x, y, coin_list: arcade.SpriteList):
+        super().__init__(uid, x, y)
         self.coin_list = coin_list
         self._hit_box = arcade.hitbox.HitBox(hitboxes_json["player"]["right"], (self.center_x, self.center_y), (2, 2))
         self.direction = Direction.RIGHT
@@ -448,10 +447,10 @@ class Projectile(AEntity):
     Sprite_Path = None
     SPEED = 750
 
-    def __init__(self, uid, current_uid, origin_x: float, origin_y: float, target_x: float, target_y: float,
+    def __init__(self, uid, origin_x: float, origin_y: float, target_x: float, target_y: float,
                  bullet_kind: str,
                  distance=700):
-        super().__init__(uid, current_uid, origin_x, origin_y)
+        super().__init__(uid, origin_x, origin_y)
         self.distance = 0
         self.hit_box = arcade.hitbox.HitBox(hitboxes_json["skeleton"]["right"],
                                             self.position)  # TODO placeholder - make sprite
@@ -473,5 +472,5 @@ class Projectile(AEntity):
 
 
 class Coin(AEntity):
-    def __init__(self, uid, current_uid, x, y):
-        super().__init__(uid, current_uid, x, y)
+    def __init__(self, uid, x, y):
+        super().__init__(uid, x, y)

@@ -4,12 +4,11 @@ import random
 import arcade
 
 from src import constants
-from src.entities import Skeleton, Archer, Coin, Player
 
 
 class World(arcade.Window):
     SKELETON_AMOUNT = 20
-    ARCHER_AMOUNT = 20
+    ARCHER_AMOUNT = 100
 
     COIN_AMOUNT = 50
 
@@ -17,6 +16,8 @@ class World(arcade.Window):
 
     def __init__(self):
         super().__init__()
+
+        from entities import Skeleton, Archer, Coin
 
         self.players = arcade.SpriteList(use_spatial_hash=True, lazy=True)
         self.player_projectiles = arcade.SpriteList(use_spatial_hash=True, lazy=True)
@@ -71,7 +72,7 @@ class World(arcade.Window):
         self.player_projectiles.on_update(delta_time)
         self.enemy_projectiles.on_update(delta_time)
 
-    def get_visible_entities_for_player(self, player: Player):
+    def get_visible_entities_for_player(self, player):
         entities_in_rect = []
         rect = [player.center_x - constants.SCREEN_WIDTH / 2,
                 player.center_x + constants.SCREEN_WIDTH / 2,
@@ -85,5 +86,5 @@ class World(arcade.Window):
         entities_in_rect.extend(arcade.get_sprites_in_rect(rect, self.coins))
         return entities_in_rect
 
-    def check_movement(self, player: Player, new_x, new_y):
+    def check_movement(self, player, new_x, new_y):
         pass

@@ -11,7 +11,7 @@ import messages
 import users
 from entities import Coin
 from entities import Player, Skeleton, Projectile, Archer
-from src.world import World
+from world import World
 from users import register, check_login
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -100,7 +100,8 @@ def handle_client(conn: socket.socket, addr):
                     if skill_num == 3:
                         player.on_skill_3()
 
-    except Exception:
+    except Exception as e:
+        print(e)
         if player:
             if uuid:
                 users.set_last_logoff_location(uuid, player.center_x, player.center_y)

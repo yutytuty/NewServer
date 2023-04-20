@@ -9,7 +9,8 @@ import arcade
 from pyglet.math import Vec2
 
 from common import check_map_bounds
-from src import constants
+import constants
+from world import World
 
 fp = open("hitboxes.json", "r")
 hitboxes_json = json.load(fp)
@@ -323,19 +324,17 @@ class Archer(AEnemy):
                 self.change_y = 0
 
     def shoot(self):
-        pass
-        # arrow_kind = "arrow"
-        # if self.direction == Direction.LEFT:
-        #     source_x = self.center_x + 30
-        # else:
-        #     source_x = self.center_x - 30
-        # projectile = Projectile(self.current_uid, self.current_uid, source_x, self.center_y, self.player_target.center_x,
-        #                         self.player_target.center_y, arrow_kind)
-        # # self.current_uid += 1  # TODO add lock
-        # self.enemy_projectiles.append(projectile)
-        # self.current_uid_lock.acquire()
-        # self.current_uid += 1
-        # self.current_uid_lock.release()
+        if self.direction == Direction.LEFT:
+            source_x = self.center_x + 30
+        else:
+            source_x = self.center_x - 30
+        world = World.get_instance()
+        world.current_uid_lock.acquire(blocking=True)
+        projectile = Projectile(world.current_uid, source_x, self.center_y, self.player_target.center_x,
+                                self.player_target.center_y, "archer")
+        world.current_uid += 1
+        world.current_uid_lock.release()
+        world.enemy_projectiles.append(projectile)
 
     def update_direction(self):
         if self.change_x < 0:
@@ -411,22 +410,22 @@ class Player(AEntity):
 
     def on_skill_1(self):
         # projectile_path = ":data:bullet/0.png"
-        if abs(self.real_time.tm_sec - self.last_skill_1_use.tm_sec) >= 2: # and self.level >= 2:
+        if abs(self.real_time.tm_sec - self.last_skill_1_use.tm_sec) >= 2:  # and self.level >= 2:
             print("used skill 1")
-        #     directions = [
-        #         [self.center_x, self.center_y + 1], [self.center_x + 1, self.center_y + 1],
-        #         [self.center_x + 1, self.center_y], [self.center_x + 1, self.center_y - 1],
-        #         [self.center_x, self.center_y - 1], [self.center_x - 1, self.center_y - 1],
-        #         [self.center_x - 1, self.center_y], [self.center_x - 1, self.center_y + 1]
-        #     ]
-        #
-        #     for i in range(8):
-        #         self.player_projectile_list.append(
-        #             Projectile(self.center_x, self.center_y, directions[i][0], directions[i][1], projectile_path, 2))
+            #     directions = [
+            #         [self.center_x, self.center_y + 1], [self.center_x + 1, self.center_y + 1],
+            #         [self.center_x + 1, self.center_y], [self.center_x + 1, self.center_y - 1],
+            #         [self.center_x, self.center_y - 1], [self.center_x - 1, self.center_y - 1],
+            #         [self.center_x - 1, self.center_y], [self.center_x - 1, self.center_y + 1]
+            #     ]
+            #
+            #     for i in range(8):
+            #         self.player_projectile_list.append(
+            #             Projectile(self.center_x, self.center_y, directions[i][0], directions[i][1], projectile_path, 2))
             self.last_skill_1_use = self.real_time
 
     def on_skill_2(self):
-        if abs(self.real_time.tm_sec - self.last_skill_2_use.tm_sec) >= 5: # and self.level >= 2:
+        if abs(self.real_time.tm_sec - self.last_skill_2_use.tm_sec) >= 5:  # and self.level >= 2:
             print("used skill 2")
             # if self.health_bar.health_points <= 80:
             #     self.health_bar.health_points += 20
@@ -437,7 +436,7 @@ class Player(AEntity):
             self.last_skill_2_use = self.real_time
 
     def on_skill_3(self):
-        if abs(self.real_time.tm_sec - self.last_skill_3_use.tm_sec) >= 7: # and self.level >= 3:
+        if abs(self.real_time.tm_sec - self.last_skill_3_use.tm_sec) >= 7:  # and self.level >= 3:
             self.using_skill_3 = True
             self.last_skill_3_use = self.real_time
             self.alpha -= Player.ALPHA_CHANGE_ON_SKILL_3
@@ -457,6 +456,7 @@ class Projectile(AEntity):
         self.max_distance = distance
         self.origin_x = origin_x
         self.origin_y = origin_y
+        self.bullet_kind = bullet_kind
 
         direction = Vec2(target_x - origin_x, target_y - origin_y).normalize() * Projectile.SPEED
         self.change_x = direction.x

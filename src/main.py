@@ -1,6 +1,7 @@
 import random
 import socket
 import threading
+from queue import Queue
 from uuid import UUID
 
 import arcade
@@ -9,7 +10,6 @@ from pyglet.math import Vec2
 import constants
 import messages
 import users
-from entities import Player, Projectile
 from users import register, check_login
 from world import World
 
@@ -19,6 +19,8 @@ s.listen(5)
 
 
 def handle_client(conn: socket.socket, addr):
+    global coin_queue
+    from entities import Player, Projectile
     print(f"[{addr}] Received connection")
     player: Player | None = None
     uuid: UUID | None = None
@@ -29,10 +31,10 @@ def handle_client(conn: socket.socket, addr):
         login_request = messages.read_identification_request(conn.recv(constants.BUFFER_SIZE))
         if login_request.register:
             uuid = register(login_request.username, login_request.password)
-            start_x = random.randint(constants.PLAYER_SPAWN_LOCATION_RANGE_MIN,
-                                     constants.PLAYER_SPAWN_LOCATION_RANGE_MAX)
-            start_y = random.randint(constants.PLAYER_SPAWN_LOCATION_RANGE_MIN,
-                                     constants.PLAYER_SPAWN_LOCATION_RANGE_MAX)
+            start_x = random.randint(constants.PLAYER_SPAWN_LOCATION_RANGE_MIN_X,
+                                     constants.PLAYER_SPAWN_LOCATION_RANGE_MAX_X)
+            start_y = random.randint(constants.PLAYER_SPAWN_LOCATION_RANGE_MIN_X,
+                                     constants.PLAYER_SPAWN_LOCATION_RANGE_MAX_X)
             if uuid:
                 resp = messages.create_empty_identification_response_success()
             else:
@@ -61,12 +63,15 @@ def handle_client(conn: socket.socket, addr):
         coin_amount = users.get_coin_amount(uuid)
         xp_amount = users.get_xp_amount(uuid)
         mushroom_amount = users.get_mushroom_amount(uuid)
+        hp_amount = users.get_hp_amount(uuid)
         resp.success.coinamount = coin_amount
         resp.success.xpamount = xp_amount
         resp.success.mushroomamount = mushroom_amount
+        resp.success.hpamount = hp_amount
         player.coin_amount = coin_amount
         player.xp_amount = xp_amount
         player.mushroom_amount = mushroom_amount
+        player.hp = hp_amount
         print(f"[{addr}] Sending {resp}")
         conn.send(resp.to_bytes_packed())
         World.get_instance().current_uid += 1
@@ -82,13 +87,7 @@ def handle_client(conn: socket.socket, addr):
             server_update = messages.create_entity_update(entities_to_send)
             conn.send(server_update.to_bytes_packed())
 
-            # health:
-            if player.should_update_health_amount:
-                health_point_update = messages.create_health_update(player.hp)
-                conn.send(health_point_update.to_bytes_packed())
-                player.should_update_health_amount = False
-
-            # coins:
+            # items:
             if player.should_update_coin_amount:
                 item_update = messages.create_item_update("coin", 1)
                 conn.send(item_update.to_bytes_packed())
@@ -96,11 +95,19 @@ def handle_client(conn: socket.socket, addr):
             if player.should_update_xp_amount:
                 item_update = messages.create_item_update("xp", 1)
                 conn.send(item_update.to_bytes_packed())
-                player.should_update_coin_amount = False
-            if player.should_update_mushroom_amount:
+                player.should_update_xp_amount = False
+            if player.should_add_to_mushroom_amount:
                 item_update = messages.create_item_update("mushroom", 1)
                 conn.send(item_update.to_bytes_packed())
-                player.should_update_coin_amount = False
+                player.should_add_to_mushroom_amount = False
+            if player.should_reduce_mushroom_amount:
+                item_update = messages.create_item_update("mushroom", -1)
+                conn.send(item_update.to_bytes_packed())
+                player.should_reduce_mushroom_amount = False
+            if player.should_update_health_amount:
+                health_update = messages.create_health_update(player.hp)
+                conn.send(health_update.to_bytes_packed())
+                player.should_update_health_amount = False
             data = messages.read_client_update(conn.recv(constants.BUFFER_SIZE))
             match data.which():
                 case "move":
@@ -123,10 +130,10 @@ def handle_client(conn: socket.socket, addr):
                         player.on_skill_2()
                     if skill_num == 3:
                         player.on_skill_3()
-
-            # # check death:
-            # if player.hp <= 0:
-            #     conn.close()
+                case "useItem":
+                    item = data.useItem
+                    if item == "mushroom":
+                        player.use_mushroom()
 
     except Exception as e:
         print(e)
@@ -136,8 +143,12 @@ def handle_client(conn: socket.socket, addr):
                 users.set_coin_amount(uuid, player.coin_amount)
                 users.set_xp_amount(uuid, player.xp_amount)
                 users.set_mushroom_amount(uuid, player.mushroom_amount)
+                users.set_hp_amount(uuid, player.hp)
                 print(f"[{addr}] Released lock for user with uuid", uuid)
                 users.set_lock_for_user(uuid, False)
+                if player.hp <= 0:
+                    print(f"[{addr}] Resetting stats for user with uuid", uuid)
+                    users.reset_stats(uuid)
             World.get_instance().players.remove(player)
         conn.close()
         quit()

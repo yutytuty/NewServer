@@ -1,4 +1,5 @@
 import hashlib
+import random
 from threading import Lock
 from uuid import UUID, uuid4
 
@@ -44,6 +45,7 @@ def init():
         "    coin_amount INT DEFAULT 0,"
         "    xp_amount INT DEFAULT 0,"
         "    mushroom_amount INT DEFAULT 0,"
+        "    hp INT DEFAULT 80,"
         "    is_locked BOOLEAN DEFAULT 0"
         ")"
     )
@@ -155,6 +157,38 @@ def get_mushroom_amount(uuid: UUID) -> int:
     amount = cursor.fetchone()[0]
     cursor_lock.release()
     return amount
+
+
+def set_hp_amount(uuid: UUID, amount: int):
+    global cursor_lock
+    cursor_lock.acquire(blocking=True)
+    sql = "UPDATE users SET hp = %s WHERE uuid = %s"
+    val = (amount, str(uuid))
+    cursor.execute(sql, val)
+    db.commit()
+    cursor_lock.release()
+
+
+def get_hp_amount(uuid: UUID) -> int:
+    global cursor_lock
+    cursor_lock.acquire(blocking=True)
+    sql = "SELECT hp FROM users WHERE uuid = %s"
+    val = (str(uuid),)
+    cursor.execute(sql, val)
+    amount = cursor.fetchone()[0]
+    cursor_lock.release()
+    return amount
+
+
+def reset_stats(uuid: UUID):
+    set_last_logoff_location(uuid, random.randint(constants.PLAYER_SPAWN_LOCATION_RANGE_MIN_X,
+                                                  constants.PLAYER_SPAWN_LOCATION_RANGE_MAX_X),
+                             random.randint(constants.PLAYER_SPAWN_LOCATION_RANGE_MIN_Y,
+                                            constants.PLAYER_SPAWN_LOCATION_RANGE_MAX_Y))
+    set_coin_amount(uuid, 0)
+    set_xp_amount(uuid, 0)
+    set_mushroom_amount(uuid, 0)
+    set_hp_amount(uuid, 80)
 
 
 def set_mushroom_amount(uuid: UUID, amount: int):

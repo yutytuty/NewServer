@@ -200,7 +200,7 @@ class Skeleton(AEnemy):
                     time_to_attack = 1.3
                     self.attack_time += delta_time
                     if self.attack_time > time_to_attack:
-                        self.player_target.on_health_change(-2)  # reduces player health
+                        self.player_target.change_health(-2)  # reduces player health
                         self.attack_time = 0
                 else:
                     self.attack_time = 0
@@ -391,7 +391,8 @@ class Player(AEntity):
         self.mushroom_amount = 0
         self.should_update_coin_amount = False
         self.should_update_xp_amount = False
-        self.should_update_mushroom_amount = False
+        self.should_add_to_mushroom_amount = False
+        self.should_reduce_mushroom_amount = False
         self.real_time = time.localtime()
         self.last_skill_1_use = time.gmtime(0)
         self.last_skill_2_use = time.gmtime(0)
@@ -399,6 +400,7 @@ class Player(AEntity):
         self.using_skill_3 = False
         self.should_update_health_amount = False
         self.hp = 80
+        self.level = 0
 
     def update_state(self):
         if self.change_x == 0 and self.change_y == 0:
@@ -417,6 +419,13 @@ class Player(AEntity):
 
     def on_update(self, delta_time: float = 1 / 60) -> None:
         self.update_player_speed(delta_time)
+
+        if self.xp_amount > 20:
+            self.level = 3
+        elif self.xp_amount > 10:
+            self.level = 2
+        elif self.xp_amount > 5:
+            self.level = 1
 
         self.check_collision()
 
@@ -447,8 +456,14 @@ class Player(AEntity):
         if len(mushroom_collision_list) > 0:
             for mushroom in mushroom_collision_list:
                 self.mushroom_amount += 1
-                self.should_update_mushroom_amount = True
+                self.should_add_to_mushroom_amount = True
                 mushroom.kill()
+
+    def use_mushroom(self):
+        if self.mushroom_amount > 0 and self.hp <= 95:
+            self.should_reduce_mushroom_amount = True
+            self.change_health(5)
+            self.mushroom_amount -= 1
 
     def update_player_speed(self, delta_time: float):
         if self.using_skill_3:
@@ -464,7 +479,7 @@ class Player(AEntity):
 
         if len(enemy_projectile_collisions) > 0:
             for projectile in enemy_projectile_collisions:
-                self.on_health_change(-1)
+                self.change_health(-1)
                 projectile.kill()
 
         elif len(enemy_collisions) >= 1 or len(player_collisions) > 0:
@@ -473,10 +488,10 @@ class Player(AEntity):
             self.change_x = 0
             self.change_y = 0
             self.state = PlayerAnimationState.IDLE
-            self.on_health_change(-1)
+            self.change_health(-1)
 
     def on_skill_1(self):
-        if abs(self.real_time.tm_sec - self.last_skill_1_use.tm_sec) >= 2:  # and self.level >= 2:
+        if abs(self.real_time.tm_sec - self.last_skill_1_use.tm_sec) >= 2 and self.level >= 1:
             directions = [
                 [self.center_x, self.center_y + 1], [self.center_x + 1, self.center_y + 1],
                 [self.center_x + 1, self.center_y], [self.center_x + 1, self.center_y - 1],
@@ -495,23 +510,23 @@ class Player(AEntity):
             self.last_skill_1_use = self.real_time
 
     def on_skill_2(self):
-        if abs(self.real_time.tm_sec - self.last_skill_2_use.tm_sec) >= 5:  # and self.level >= 2:
+        if abs(self.real_time.tm_sec - self.last_skill_2_use.tm_sec) >= 5 and self.level >= 2:
             if self.hp <= 80:
-                self.on_health_change(20)
+                self.change_health(20)
             elif self.hp <= 100:
                 hp_to_add = 100 - self.hp
-                self.on_health_change(hp_to_add)
+                self.change_health(hp_to_add)
             else:
                 return
             self.last_skill_2_use = self.real_time
 
     def on_skill_3(self):
-        if abs(self.real_time.tm_sec - self.last_skill_3_use.tm_sec) >= 7:  # and self.level >= 3:
+        if abs(self.real_time.tm_sec - self.last_skill_3_use.tm_sec) >= 7 and self.level >= 3:
             self.using_skill_3 = True
             self.last_skill_3_use = self.real_time
             self.alpha -= Player.ALPHA_CHANGE_ON_SKILL_3
 
-    def on_health_change(self, change_amount):
+    def change_health(self, change_amount):
         self.hp += change_amount
         self.should_update_health_amount = True
 
@@ -558,4 +573,3 @@ class Coin(AEntity):
 class Mushroom(AEntity):
     def __init__(self, uid, x, y):
         super().__init__(uid, x, y)
-        print("you just got mushhed")

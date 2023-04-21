@@ -473,19 +473,21 @@ class Player(AEntity):
             self.on_health_change(-1)
 
     def on_skill_1(self):
-        # projectile_path = ":data:bullet/0.png"
         if abs(self.real_time.tm_sec - self.last_skill_1_use.tm_sec) >= 2:  # and self.level >= 2:
-            print("used skill 1")
-            #     directions = [
-            #         [self.center_x, self.center_y + 1], [self.center_x + 1, self.center_y + 1],
-            #         [self.center_x + 1, self.center_y], [self.center_x + 1, self.center_y - 1],
-            #         [self.center_x, self.center_y - 1], [self.center_x - 1, self.center_y - 1],
-            #         [self.center_x - 1, self.center_y], [self.center_x - 1, self.center_y + 1]
-            #     ]
-            #
-            #     for i in range(8):
-            #         self.player_projectile_list.append(
-            #             Projectile(self.center_x, self.center_y, directions[i][0], directions[i][1], projectile_path, 2))
+            directions = [
+                [self.center_x, self.center_y + 1], [self.center_x + 1, self.center_y + 1],
+                [self.center_x + 1, self.center_y], [self.center_x + 1, self.center_y - 1],
+                [self.center_x, self.center_y - 1], [self.center_x - 1, self.center_y - 1],
+                [self.center_x - 1, self.center_y], [self.center_x - 1, self.center_y + 1]
+            ]
+
+            for i in range(8):
+                world = World.get_instance()
+                world.current_uid_lock.acquire(blocking=True)
+                projectile = Projectile(world.current_uid, self.center_x, self.center_y, directions[i][0], directions[i][1], "archer")
+                world.current_uid += 1
+                world.current_uid_lock.release()
+                world.player_projectiles.append(projectile)
             self.last_skill_1_use = self.real_time
 
     def on_skill_2(self):

@@ -414,7 +414,6 @@ class Player(AEntity):
 
     def on_update(self, delta_time: float = 1 / 60) -> None:
         self.update_player_speed(delta_time)
-        # # ToDo dont let the player walk wherever they want (check distance he moved and check he is not colliding
 
         self.check_collision()
 
@@ -455,11 +454,9 @@ class Player(AEntity):
         self.center_x += self.change_x
         self.center_y += self.change_y
 
-        # ToDo chenk collision and stuuf
-
     def check_collision(self):
-        # enemy_collisions = arcade.check_for_collision_with_list(self, self.enemy_array)
-        # player_collisions = arcade.check_for_collision_with_list(self, self.players)
+        enemy_collisions = arcade.check_for_collision_with_list(self, self.enemy_array)
+        player_collisions = arcade.check_for_collision_with_list(self, self.players)
         enemy_projectile_collisions = arcade.check_for_collision_with_list(self, self.enemy_projectile_list)
 
         if len(enemy_projectile_collisions) > 0:
@@ -467,12 +464,13 @@ class Player(AEntity):
                 self.on_health_change(-1)
                 projectile.kill()
 
-        # elif len(enemy_collisions) >= 1 or len(player_collisions) > 0:
-        #     self.center_x -= self.change_x
-        #     self.center_y -= self.change_y
-        #     self.change_x = 0
-        #     self.change_y = 0
-        #     self._state = self.animation_state.IDLE
+        elif len(enemy_collisions) >= 1 or len(player_collisions) > 0:
+            self.center_x -= self.change_x
+            self.center_y -= self.change_y
+            self.change_x = 0
+            self.change_y = 0
+            self.state = PlayerAnimationState.IDLE
+            self.on_health_change(-1)
 
     def on_skill_1(self):
         # projectile_path = ":data:bullet/0.png"

@@ -134,6 +134,9 @@ class AEnemy(AEntity):
             direction = Vec2(target_x - origin_x, target_y - origin_y).normalize() * self.speed  # * delta_time
             self.change_x = direction.x
             self.change_y = direction.y
+        else:
+            self.change_x = 0  # remove this if you want an ambush
+            self.change_y = 0
 
     def get_state(self):
         return self.state
@@ -484,7 +487,8 @@ class Player(AEntity):
             for i in range(8):
                 world = World.get_instance()
                 world.current_uid_lock.acquire(blocking=True)
-                projectile = Projectile(world.current_uid, self.center_x, self.center_y, directions[i][0], directions[i][1], "archer")
+                projectile = Projectile(world.current_uid, self.center_x, self.center_y, directions[i][0],
+                                        directions[i][1], "archer")
                 world.current_uid += 1
                 world.current_uid_lock.release()
                 world.player_projectiles.append(projectile)
@@ -554,3 +558,4 @@ class Coin(AEntity):
 class Mushroom(AEntity):
     def __init__(self, uid, x, y):
         super().__init__(uid, x, y)
+        print("you just got mushhed")

@@ -124,6 +124,10 @@ def handle_client(conn: socket.socket, addr):
                     if skill_num == 3:
                         player.on_skill_3()
 
+            # # check death:
+            # if player.hp <= 0:
+            #     conn.close()
+
     except Exception as e:
         print(e)
         if player:

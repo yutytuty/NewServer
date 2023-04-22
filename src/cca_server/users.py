@@ -2,6 +2,7 @@ import hashlib
 import random
 from threading import Lock
 from uuid import UUID, uuid4
+import time
 
 import pymysql.cursors
 
@@ -19,6 +20,10 @@ def init():
 
     with open(constants.DB_PASSWORD_FILE_PATH, "r") as f:
         password = f.read()
+
+    print('Ensuring the database is ready...', flush=True)
+    time.sleep(10)
+    print('A\'ight!', flush=True)
 
     db = pymysql.connect(
         host=constants.DB_HOST,

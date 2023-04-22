@@ -6,7 +6,7 @@ services:
     depends_on:
       - "db"
     ports:
-      - "1354:1354/udp"
+      - "1354:1354/tcp"
     secrets:
       - db_password
   db:

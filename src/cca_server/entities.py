@@ -10,6 +10,7 @@ from pyglet.math import Vec2
 
 from .common import check_map_bounds, relative_open
 from . import constants
+from .world import World
 
 
 fp = relative_open("hitboxes.json", "r")

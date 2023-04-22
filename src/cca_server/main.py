@@ -7,11 +7,11 @@ from uuid import UUID
 import arcade
 from pyglet.math import Vec2
 
-import constants
-import messages
-import users
-from users import register, check_login
-from world import World
+from . import constants
+from . import messages
+from . import users
+from .users import register, check_login
+from .world import World
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(("0.0.0.0", constants.PORT))
@@ -20,8 +20,8 @@ s.listen(5)
 
 def handle_client(conn: socket.socket, addr):
     global coin_queue
-    from entities import Player, Projectile
     print(f"[{addr}] Received connection")
+    from .entities import Player, Projectile
     player: Player | None = None
     uuid: UUID | None = None
 

@@ -1,6 +1,5 @@
 import capnp
 
-import src
 from entities import Archer, XP, Mushroom
 from entities import Player, Skeleton, Projectile, Coin
 

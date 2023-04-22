@@ -1,9 +1,9 @@
 import threading
 import random
+import time
 
 import arcade
-
-from src import constants
+import constants
 
 
 class World(arcade.Window):
@@ -62,6 +62,15 @@ class World(arcade.Window):
         if not cls.instance:
             cls.instance = World()
         return cls.instance
+
+    def run(self):
+        prev_time = time.time()
+        while True:
+            current_time = time.time()
+            if current_time - prev_time >= 1/60:
+                self.on_update(current_time - prev_time)
+                prev_time = current_time
+            # time.sleep(1 / 60)
 
     def on_update(self, delta_time: float):
         for player in self.players_to_add:

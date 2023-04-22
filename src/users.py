@@ -26,12 +26,8 @@ def init():
     with open(constants.DB_PASSWORD_FILE_PATH, "r") as f:
         password = f.read()
 
-    db = mysql.connector.connect(
-        host=constants.DB_HOST,
-        user=constants.DB_USER,
-        password=password,
-        database="game"
-    )
+    db = mysql.connector.connect(user='gameserver', password='bestToDoItSimple',
+                                 host='mysql', database='game')
 
     cursor = db.cursor()
 

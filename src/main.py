@@ -14,7 +14,7 @@ from users import register, check_login
 from world import World
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind(("localhost", constants.PORT))
+s.bind(("0.0.0.0", constants.PORT))
 s.listen(5)
 
 
@@ -164,7 +164,11 @@ def listen_for_connections():
         arcade.exit()
 
 
+print(0)
 users.init()
+print(1)
 connection_listener = threading.Thread(target=listen_for_connections)
+print(2)
 connection_listener.start()
+print(3)
 World.get_instance().run()

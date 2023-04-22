@@ -16,6 +16,7 @@ authors = [
 dependencies = [
 	"arcade == 3.0.0.dev20",
 	"PyMySQL[rsa] == 1.0.3",
+	"colossalcyberadventuremessages @ git+https://AmitDIRTYC0W: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@github.com/AmitDIRTYC0W/ColossalCyberAdventureMessages.git@e8be9b1b30724460ac81a85b221e29b4d8328fed"
 ]
 requires-python = ">=3.10"
 dynamic = ['version', 'description']

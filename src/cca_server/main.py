@@ -14,7 +14,7 @@ from users import register, check_login
 from world import World
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind(("localhost", constants.PORT))
+s.bind(("0.0.0.0", constants.PORT))
 s.listen(5)
 
 

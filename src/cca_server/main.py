@@ -20,8 +20,8 @@ s.listen(5)
 
 def handle_client(conn: socket.socket, addr):
     global coin_queue
-    print(f"[{addr}] Received connection")
     from .entities import Player, Projectile
+    print(f"[{addr}] Received connection", flush=True)
     player: Player | None = None
     uuid: UUID | None = None
 
@@ -30,6 +30,7 @@ def handle_client(conn: socket.socket, addr):
     try:
         login_request = messages.read_identification_request(conn.recv(constants.BUFFER_SIZE))
         if login_request.register:
+            print(f'[{addr}] Registering {login_request.username}', flush=True)
             uuid = register(login_request.username, login_request.password)
             start_x = random.randint(constants.PLAYER_SPAWN_LOCATION_RANGE_MIN_X,
                                      constants.PLAYER_SPAWN_LOCATION_RANGE_MAX_X)
@@ -43,16 +44,18 @@ def handle_client(conn: socket.socket, addr):
             try:
                 result = check_login(login_request.username, login_request.password)
                 if result:
+                    print(f'[{addr}] Logging {login_request.username} in', flush=True)
                     uuid, start_x, start_y = result
                     resp = messages.create_empty_identification_response_success()
                 else:
+                    print(f'[{addr}] Received invalid credentials for {login_request.username}', flush=True)
                     resp = messages.create_identification_response_failure("invalidCredentials")
             except users.UserAlreadyLoggedInError:
                 resp = messages.create_identification_response_failure("userAlreadyLoggedIn")
         if resp.which() == "failure":
             print(f"[{addr}] Sending {resp}")
             conn.send(resp.to_bytes_packed())
-            print(f"[{addr}] Closing connection")
+            print(f"[{addr}] Closing connection", flush=True)
             quit()
 
         World.get_instance().current_uid_lock.acquire()
@@ -72,7 +75,7 @@ def handle_client(conn: socket.socket, addr):
         player.xp_amount = xp_amount
         player.mushroom_amount = mushroom_amount
         player.hp = hp_amount
-        print(f"[{addr}] Sending {resp}")
+        print(f"[{addr}] Sending {resp}", flush=True)
         conn.send(resp.to_bytes_packed())
         World.get_instance().current_uid += 1
         World.get_instance().current_uid_lock.release()

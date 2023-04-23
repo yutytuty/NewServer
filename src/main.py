@@ -15,7 +15,9 @@ from world import World
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(("0.0.0.0", constants.PORT))
+print("bound port")
 s.listen(5)
+print("listening for connections")
 
 
 def handle_client(conn: socket.socket, addr):

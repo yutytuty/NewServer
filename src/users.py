@@ -1,5 +1,6 @@
 import hashlib
 import random
+import time
 from threading import Lock
 from uuid import UUID, uuid4
 
@@ -26,8 +27,12 @@ def init():
     with open(constants.DB_PASSWORD_FILE_PATH, "r") as f:
         password = f.read()
 
+    print("starting to sleep")
+    time.sleep(60)
+    print("done sleeping")
     db = mysql.connector.connect(user='gameserver', password='bestToDoItSimple',
                                  host='mysql', database='game')
+    print("connected to db")
 
     cursor = db.cursor()
 

@@ -1,16 +1,13 @@
 version: "3.9"
 services:
   server:
-    build:
-      context: .
+    image: yutytuty/cyber_server:latest
     depends_on:
       - "mysql"
     ports:
       - "1354:1354/tcp"
-    secrets:
-      - db_password
   mysql:
-    image: mysql/mysql-server:latest
+    image: yutytuty/cyber_mysql:latest
     container_name: mysql-docker-container
     ports:
       - "3306:3306"
@@ -19,6 +16,3 @@ services:
       MYSQL_DATABASE: game
       MYSQL_USER: gameserver
       MYSQL_PASSWORD: bestToDoItSimple
-secrets:
-  db_password:
-    file: db_passwd.txt

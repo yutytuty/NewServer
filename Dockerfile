@@ -14,5 +14,4 @@ COPY . ./
 
 ENV PATH=/root/.local/bin:$PATH
 
-#CMD ["python3", "src/main.py"]
-CMD ["python3", "-c", "while True: pass"]
+CMD ["python3", "-u", "src/main.py"]

@@ -15,9 +15,7 @@ from world import World
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(("0.0.0.0", constants.PORT))
-print("bound port")
 s.listen(5)
-print("listening for connections")
 
 
 def handle_client(conn: socket.socket, addr):
@@ -91,25 +89,30 @@ def handle_client(conn: socket.socket, addr):
 
             # items:
             if player.should_update_coin_amount:
-                item_update = messages.create_item_update("coin", 1)
+                item_update = messages.create_item_update("coin", player.coin_amount)
                 conn.send(item_update.to_bytes_packed())
-                player.should_update_coin_amount = False
+                with player.should_update_coin_amount_lock:
+                    player.should_update_coin_amount = False
             if player.should_update_xp_amount:
-                item_update = messages.create_item_update("xp", 1)
+                item_update = messages.create_item_update("xp", player.xp_amount)
                 conn.send(item_update.to_bytes_packed())
-                player.should_update_xp_amount = False
+                with player.should_update_xp_amount_lock:
+                    player.should_update_xp_amount = False
             if player.should_add_to_mushroom_amount:
-                item_update = messages.create_item_update("mushroom", 1)
+                item_update = messages.create_item_update("mushroom", player.mushroom_amount)
                 conn.send(item_update.to_bytes_packed())
-                player.should_add_to_mushroom_amount = False
+                with player.should_add_to_mushroom_amount_lock:
+                    player.should_add_to_mushroom_amount = False
             if player.should_reduce_mushroom_amount:
-                item_update = messages.create_item_update("mushroom", -1)
+                item_update = messages.create_item_update("mushroom", player.mushroom_amount)
                 conn.send(item_update.to_bytes_packed())
-                player.should_reduce_mushroom_amount = False
+                with player.should_reduce_mushroom_amount_lock:
+                    player.should_reduce_mushroom_amount = False
             if player.should_update_health_amount:
                 health_update = messages.create_health_update(player.hp)
                 conn.send(health_update.to_bytes_packed())
-                player.should_update_health_amount = False
+                with player.update_health_lock:
+                    player.should_update_health_amount = False
             data = messages.read_client_update(conn.recv(constants.BUFFER_SIZE))
             match data.which():
                 case "move":
@@ -125,6 +128,7 @@ def handle_client(conn: socket.socket, addr):
                     World.get_instance().player_projectiles.append(projectile)
                     World.get_instance().current_uid_lock.release()
                 case "useSkill":
+                    print(data)
                     skill_num = data.useSkill
                     if skill_num == 1:
                         player.on_skill_1()
@@ -166,11 +170,7 @@ def listen_for_connections():
         arcade.exit()
 
 
-print(0)
 users.init()
-print(1)
 connection_listener = threading.Thread(target=listen_for_connections)
-print(2)
 connection_listener.start()
-print(3)
 World.get_instance().run()

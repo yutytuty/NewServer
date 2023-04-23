@@ -4,6 +4,7 @@ import time
 from enum import Enum
 from math import atan2, degrees
 from math import sqrt
+from threading import Lock
 
 import arcade
 from pyglet.math import Vec2
@@ -158,14 +159,16 @@ class AEnemy(AEntity):
         results = choices[:2]
         for result in results:
             if result == Coin:
+                x, y = self.center_x + random.randint(10, 15), self.center_y + random.randint(10, 15)
+                print(x, y)
                 world.coins.append(
-                    Coin(world.current_uid, self.center_x + random.randint(3, 5), self.center_y + random.randint(3, 5)))
+                    Coin(world.current_uid, x, y))
             elif result == Mushroom:
-                world.mushrooms.append(Mushroom(world.current_uid, self.center_x + random.randint(3, 5),
-                                                self.center_y + random.randint(3, 5)))
+                world.mushrooms.append(Mushroom(world.current_uid, self.center_x + random.randint(50, 52),
+                                                self.center_y + random.randint(50, 52)))
             else:
                 world.xps.append(
-                    XP(world.current_uid, self.center_x + random.randint(3, 5), self.center_y + random.randint(3, 5)))
+                    XP(world.current_uid, self.center_x + random.randint(90, 92), self.center_y + random.randint(90, 92)))
             world.current_uid += 1
         world.current_uid_lock.release()
         super().kill()
@@ -389,9 +392,13 @@ class Player(AEntity):
         self.coin_amount = 0
         self.xp_amount = 0
         self.mushroom_amount = 0
+        self.should_update_coin_amount_lock = Lock()
         self.should_update_coin_amount = False
+        self.should_update_xp_amount_lock = Lock()
         self.should_update_xp_amount = False
+        self.should_add_to_mushroom_amount_lock = Lock()
         self.should_add_to_mushroom_amount = False
+        self.should_reduce_mushroom_amount_lock = Lock()
         self.should_reduce_mushroom_amount = False
         self.real_time = time.localtime()
         self.last_skill_1_use = time.gmtime(0)
@@ -399,6 +406,7 @@ class Player(AEntity):
         self.last_skill_3_use = time.gmtime(0)
         self.using_skill_3 = False
         self.should_update_health_amount = False
+        self.update_health_lock = Lock()
         self.hp = 80
         self.level = 0
 
@@ -442,28 +450,32 @@ class Player(AEntity):
         if len(coin_collision_list) > 0:
             for coin in coin_collision_list:
                 self.coin_amount += 1
-                self.should_update_coin_amount = True
+                with self.should_update_coin_amount_lock:
+                    self.should_update_coin_amount = True
                 coin.kill()
 
         xp_collision_list = arcade.check_for_collision_with_list(self, World.get_instance().xps)
         if len(xp_collision_list) > 0:
             for xp in xp_collision_list:
                 self.xp_amount += 1
-                self.should_update_xp_amount = True
+                with self.should_update_xp_amount_lock:
+                    self.should_update_xp_amount = True
                 xp.kill()
 
         mushroom_collision_list = arcade.check_for_collision_with_list(self, World.get_instance().mushrooms)
         if len(mushroom_collision_list) > 0:
             for mushroom in mushroom_collision_list:
                 self.mushroom_amount += 1
-                self.should_add_to_mushroom_amount = True
+                with self.should_add_to_mushroom_amount_lock:
+                    self.should_add_to_mushroom_amount = True
                 mushroom.kill()
 
     def use_mushroom(self):
         if self.mushroom_amount > 0 and self.hp <= 95:
             self.should_reduce_mushroom_amount = True
             self.change_health(5)
-            self.mushroom_amount -= 1
+            with self.should_reduce_mushroom_amount_lock:
+                self.mushroom_amount -= 1
 
     def update_player_speed(self, delta_time: float):
         if self.using_skill_3:
@@ -528,7 +540,8 @@ class Player(AEntity):
 
     def change_health(self, change_amount):
         self.hp += change_amount
-        self.should_update_health_amount = True
+        with self.update_health_lock:
+            self.should_update_health_amount = True
 
 
 class Projectile(AEntity):

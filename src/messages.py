@@ -85,8 +85,9 @@ def create_empty_identification_response_success():
 
 
 def create_item_update(item_type: str, change: int):
+    print("creating item update", item_type, change)
     return server_update_capnp.ServerUpdate.new_message(
-        itemAdditionUpdate=server_update_capnp.ItemAdditionUpdate.new_message(item=item_type, change=change))
+        itemAdditionUpdate=server_update_capnp.ItemAdditionUpdate.new_message(item=item_type, amount=change))
 
 
 def create_health_update(health_points: int):

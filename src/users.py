@@ -26,10 +26,7 @@ def init():
 
     with open(constants.DB_PASSWORD_FILE_PATH, "r") as f:
         password = f.read()
-
-    print("starting to sleep")
-    time.sleep(60)
-    print("done sleeping")
+    time.sleep(15)
     db = mysql.connector.connect(user='gameserver', password='bestToDoItSimple',
                                  host='mysql', database='game')
     print("connected to db")

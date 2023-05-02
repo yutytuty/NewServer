@@ -128,7 +128,6 @@ def handle_client(conn: socket.socket, addr):
                     World.get_instance().player_projectiles.append(projectile)
                     World.get_instance().current_uid_lock.release()
                 case "useSkill":
-                    print(data)
                     skill_num = data.useSkill
                     if skill_num == 1:
                         player.on_skill_1()

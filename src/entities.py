@@ -249,6 +249,7 @@ class Skeleton(AEnemy):
             self.player_target = closest_player
             self.set_direction_to_player(delta_time)
         else:
+            self.player_target = None
             self.change_x = 0
             self.change_y = 0
 
@@ -348,6 +349,8 @@ class Archer(AEnemy):
             elif distance_to_player < mam_distance_to_player:
                 self.change_x = 0
                 self.change_y = 0
+        else:
+            self.player_target = None
 
     def shoot(self):
         if self.direction == Direction.LEFT:
@@ -495,12 +498,13 @@ class Player(AEntity):
                 projectile.kill()
 
         elif len(enemy_collisions) >= 1 or len(player_collisions) > 0:
-            self.center_x -= self.change_x
-            self.center_y -= self.change_y
-            self.change_x = 0
-            self.change_y = 0
-            self.state = PlayerAnimationState.IDLE
-            self.change_health(-1)
+            pass
+            # self.center_x -= self.change_x
+            # self.center_y -= self.change_y
+            # self.change_x = 0
+            # self.change_y = 0
+            # self.state = PlayerAnimationState.IDLE
+            # self.change_health(-1)
 
     def on_skill_1(self):
         if abs(self.real_time.tm_sec - self.last_skill_1_use.tm_sec) >= 2 and self.level >= 1:
